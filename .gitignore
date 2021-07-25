@@ -1,5 +1,6 @@
 logs
 instance
+rmq_consumer.egg-info
 **/__pycache__/
 configuration/envs
 !configuration/envs/sample.yml
