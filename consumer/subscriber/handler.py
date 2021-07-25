@@ -1,5 +1,6 @@
 from utils.func import log, log_error
 from rmq.config import RMQConfig
+import shlex
 import json
 from .commandexecutor import CommandExecutor
 import pydevd_pycharm
@@ -19,28 +20,12 @@ def handle_queue(channel, delivery_tag, body, extra_args):
 
 
 def exec_command(data):
-    try:
-        args = json.loads(data)
-    except Exception as e:
-        log_error(e)
+    if not data:
         return None
-
-    if 'user_id' not in args or 'cl_id' not in args or 'req_id' not in args:
-        log_error('Not executing some params maybe missing [user_id, cli_id, req_id]')
-        return None
-
-    entities = args['entities'] if 'entities' in args else None
-
-    if entities:
-        try:
-            entities = json.dumps(entities)
-        except Exception as e:
-            log_error(e)
-            return None
 
     cwd = RMQConfig.consumer_value('CWD')
     command = RMQConfig.consumer_value('COMMAND')
-    command = "{} '{}' '{}' '{}' '{}'".format(command, args['user_id'], args['req_id'], args['cl_id'], entities)
+    command = "{} '{}'".format(command, data)
 
     executor = CommandExecutor()
     with executor.run(command=command, c_progress=None, cwd=cwd) as process:
