@@ -1,0 +1,23 @@
+APP:
+  ENV: ''
+  APP_LOG_DIR: False
+  APP_LOG_NAME: 'logs.log'
+  SSL_CONTEXT: False
+
+CONSUMER:
+  CWD: ''
+  COMMAND: ''
+
+RMQ:
+  SERVER: ''
+  USER: ''
+  PASS: ''
+  PORT: 5672
+  EXCHANGE:
+    NAME: ''
+    TYPE: ''
+  QUEUE: ''
+  TIMEOUT: 300
+  HEARTBEAT: 0
+  ROUTING_KEYS: [ '' ]
+  JOBS_LIMIT: 6

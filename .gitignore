@@ -1,0 +1,6 @@
+logs
+instance
+**/__pycache__/
+configuration/envs
+!configuration/envs/sample.yml
+venv
