@@ -14,7 +14,6 @@ def handle_queue(channel, delivery_tag, body, extra_args):
     except Exception as e:
         log_error(e)
         reject_job(channel, delivery_tag)
-        raise e
 
     acknowledge_job(channel, delivery_tag)
 
