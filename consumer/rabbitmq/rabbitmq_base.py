@@ -24,6 +24,7 @@ class RabbitMQBase(object):
     channel = None
 
     queue_name = None
+    auto_delete = False
     routing_keys = None
 
     '''
@@ -95,9 +96,10 @@ class RabbitMQBase(object):
         else:
             self.setup_connection()
 
-        log("RabbitMQ initialized. Exchange:{}-{} | Queue:{} | Instance:{}".format(self.exchange, self.exchange_type,
-                                                                                   self.queue_name,
-                                                                                   self.new_initialization))
+        log("RabbitMQ initialized. Exchange:{} type:{} | Queue:{} | Instance:{}".format(self.exchange,
+                                                                                        self.exchange_type,
+                                                                                        self.queue_name,
+                                                                                        self.new_initialization))
 
     def setup_connection(self):
         self.new_initialization = True
@@ -135,10 +137,13 @@ class RabbitMQBase(object):
 
         self.routing_keys = self.config['ROUTING_KEYS']
 
-        args = {
-            'x-max-priority': 10
-        }
-        self.channel.queue_declare(self.queue_name, durable=True, arguments=args)
+        args = {}
+        if self.exchange_type == 'topic':
+            args = {
+                'x-max-priority': 10
+            }
+
+        self.channel.queue_declare(self.queue_name, durable=True, arguments=args, auto_delete=self.auto_delete)
 
         if self.routing_keys:
             for binding in self.routing_keys:
@@ -249,7 +254,8 @@ class RabbitMQBase(object):
 
     def setup_config(self):
         self.config = RMQConfig.config['RMQ']
-        self.queue_name = self.config['QUEUE'] + "_" + current_app.config['APP']['ENV'].lower()
+        self.queue_name = self.config['QUEUE']
+        self.auto_delete = self.config['AUTO_DELETE']
         if not self.exchange:
             self.exchange = self.config['EXCHANGE']['NAME']
             self.exchange_type = self.config['EXCHANGE']['TYPE']
