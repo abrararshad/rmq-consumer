@@ -26,7 +26,7 @@ def exec_command(data):
     cwd = RMQConfig.consumer_value('CWD')
     command = RMQConfig.consumer_value('COMMAND')
     command = "{} '{}'".format(command, data)
-    print("Running command: {} in {}".format(command, cwd))
+    log("Running command: {} in {}".format(command, cwd))
     executor = CommandExecutor()
     with executor.run(command=command, c_progress=None, cwd=cwd) as process:
         process.communicate()
