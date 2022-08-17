@@ -1,5 +1,5 @@
 click==8.0.1
-dataclasses==0.8
+dataclasses==0.6
 environs==9.3.2
 Flask==2.0.1
 importlib-metadata==4.6.1
@@ -7,7 +7,6 @@ itsdangerous==2.0.1
 Jinja2==3.0.1
 MarkupSafe==2.0.1
 marshmallow==3.12.2
-pika==1.2.0
 pydevd-pycharm==212.4746.13
 python-dotenv==0.18.0
 PyYAML==5.4.1
