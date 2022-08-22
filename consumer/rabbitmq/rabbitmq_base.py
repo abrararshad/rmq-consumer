@@ -184,7 +184,7 @@ class RabbitMQBase(object):
         on_message_callback = functools.partial(self.message_handler, args=(
             self.connection, self.threads, callback, with_pool, kwargs))
 
-        self.channel.basic_qos(prefetch_count=self.jobs_limit)
+        self.channel.basic_qos(prefetch_count=int(self.jobs_limit))
         self.channel.basic_consume(queue=self.queue_name,
                                    auto_ack=False,
                                    on_message_callback=on_message_callback)
