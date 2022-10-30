@@ -28,7 +28,10 @@ def exec_command(data):
     command = "{} '{}'".format(command, data)
     log("Running command: {} in {}".format(command, cwd))
     executor = CommandExecutor()
-    with executor.run(command=command, c_progress=None, cwd=cwd) as process:
+
+    # log output to the file
+    log_file = open('{}/{}'.format(RMQConfig.config['APP_LOGS_DIR'], RMQConfig['APP']['APP_LOG_NAME']), "w")
+    with executor.run(command=command, c_progress=None, c_stderr=log_file, c_stdout=log_file, cwd=cwd) as process:
         process.communicate()
 
 

@@ -9,8 +9,11 @@ def _p_open(commands, cwd, p_stdin=False, p_stdout=False, p_stderr=subprocess.ST
     stdout_stream = subprocess.PIPE if p_stdout else None
     stderr_stream = p_stderr
 
-    return subprocess.Popen(shlex.split(commands), stdout=stdout_stream, stderr=stderr_stream, stdin=stdin_stream
+    p = subprocess.Popen(shlex.split(commands), stdout=stdout_stream, stderr=stderr_stream, stdin=stdin_stream
                             , universal_newlines=universal_newlines, cwd=cwd)
+
+    p.wait()
+    return p
 
 
 class CommandExecutor(object):

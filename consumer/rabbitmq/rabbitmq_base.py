@@ -68,7 +68,7 @@ class RabbitMQBase(object):
         self.jobs = mp.Manager().Queue()
 
         if self.config['JOBS_LIMIT']:
-            self.jobs_limit = self.config['JOBS_LIMIT']
+            self.jobs_limit = int(self.config['JOBS_LIMIT'])
         else:
             """
             Otherwise two jobs per logical processor
