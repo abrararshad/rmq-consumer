@@ -10,14 +10,11 @@ import pydevd_pycharm
 
 
 def connect():
-    queue_subscriber = None
     try:
-        queue_subscriber = QueueSubscriber()
-        queue_subscriber.subscribe(handle_queue, True)
+        queue_subscriber = QueueSubscriber(logger=log)
+        queue_subscriber.subscribe(callback=handle_queue, with_pool=False)
     except Exception as e:
         log_error(e)
-        if queue_subscriber:
-            queue_subscriber.clear_cache()
     finally:
         connect_back_in = 5
         log("Reconnecting after {} seconds".format(connect_back_in))

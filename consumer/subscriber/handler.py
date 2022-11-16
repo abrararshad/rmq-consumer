@@ -14,10 +14,15 @@ def handle_queue(channel, delivery_tag, body, extra_args):
     except Exception as e:
         log_error(e)
         reject_job(channel, delivery_tag)
+        exit_process()
         return
 
     acknowledge_job(channel, delivery_tag)
+    exit_process()
 
+def exit_process():
+    log('exiting...')
+    exit(0)
 
 def exec_command(data):
     if not data:

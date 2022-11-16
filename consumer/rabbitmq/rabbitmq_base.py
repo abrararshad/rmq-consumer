@@ -1,11 +1,10 @@
+from flask import current_app
 import multiprocessing as mp
+import sys
 import json
 import functools
 import queue
 import pika
-from flask import current_app
-from rmq.config import RMQConfig
-from utils.func import log, log_error
 
 
 class RabbitMQBase(object):
@@ -52,7 +51,10 @@ class RabbitMQBase(object):
 
     manager = None
 
-    def __init__(self, host=default_host, exchange=None, exchange_type=None):
+    logger = None
+
+    def __init__(self, host=default_host, exchange=None, exchange_type=None, logger=None):
+        self.logger = logger
         self.host = host
         self.exchange = exchange
         self.exchange_type = exchange_type if exchange_type else 'direct'
@@ -65,8 +67,6 @@ class RabbitMQBase(object):
             raise ValueError('Role is invalid: '.format(self.role_type))
 
         self.cache_key += self.role_type.upper()
-        self.jobs = mp.Manager().Queue()
-
         if self.config['JOBS_LIMIT']:
             self.jobs_limit = int(self.config['JOBS_LIMIT'])
         else:
@@ -81,8 +81,14 @@ class RabbitMQBase(object):
         except ConnectionError as e:
             raise e
 
+    def log(self, msg):
+        if self.logger:
+            self.logger(msg)
+        else:
+            print(msg)
+
     def initialize(self):
-        log('Setting up RabbitMQ with key: {}'.format(self.cache_key))
+        self.log('Setting up RabbitMQ with key: {}'.format(self.cache_key))
         if self.cache_key in current_app.config and current_app.config[self.cache_key] is not None:
             (connection, channel, queue_name) = current_app.config[self.cache_key]
 
@@ -96,10 +102,10 @@ class RabbitMQBase(object):
         else:
             self.setup_connection()
 
-        log("RabbitMQ initialized. Exchange:{} type:{} | Queue:{} | Instance:{}".format(self.exchange,
-                                                                                        self.exchange_type,
-                                                                                        self.queue_name,
-                                                                                        self.new_initialization))
+        self.log("RabbitMQ initialized. Exchange:{} type:{} | Queue:{} | Instance:{}".format(self.exchange,
+                                                                                             self.exchange_type,
+                                                                                             self.queue_name,
+                                                                                             self.new_initialization))
 
     def setup_connection(self):
         self.new_initialization = True
@@ -118,7 +124,7 @@ class RabbitMQBase(object):
             current_app.config[self.cache_key] = self.connection, self.channel, self.queue_name
 
         except ConnectionError as e:
-            log(e)
+            self.log(e)
             raise e
 
     def declare_amq(self):
@@ -132,10 +138,14 @@ class RabbitMQBase(object):
         self.bind_queue()
 
     def bind_queue(self):
-        if not self.config['ROUTING_KEYS']:
-            log('Routing keys are not defined')
+        if 'RMQ_BINDING_KEYS' in current_app.config:
+            self.routing_keys = current_app.config['RMQ_BINDING_KEYS']
 
-        self.routing_keys = self.config['ROUTING_KEYS']
+        if not self.routing_keys:
+            self.routing_keys = self.config['ROUTING_KEYS']
+
+        if not self.routing_keys:
+            self.log('Routing keys are not defined')
 
         args = {}
         if self.exchange_type == 'topic':
@@ -152,23 +162,23 @@ class RabbitMQBase(object):
                     queue=self.queue_name,
                     routing_key=binding
                 )
-                log('Queue:%s bound to key:%s ' % (self.queue_name, binding))
+                self.log('Queue:%s bound to key:%s ' % (self.queue_name, binding))
 
     def send(self, msg_object, routing_key='primary.#', priority=0, close_con=False):
         try:
             msg = json.dumps(msg_object)
             response = self.publish(msg, routing_key, priority)
         except Exception as e:
-            log('Reconnecting to RabbitMQ: {}'.format(e))
+            self.log('Reconnecting to RabbitMQ: {}'.format(e))
             self.setup_connection()
             response = self.publish(msg, routing_key, priority)
 
-        log('RabbmitMQ response: ' + str(response))
+        self.log('RabbmitMQ response: ' + str(response))
         if close_con:
             self.close_connection()
 
     def publish(self, msg, routing_key='primary.#', priority=0):
-        log('Publishing on exchange: {} with routing key: {}'.format(self.exchange, routing_key))
+        self.log('Publishing on exchange: {} with routing key: {}'.format(self.exchange, routing_key))
         return self.channel.basic_publish(exchange=self.exchange,
                                           routing_key=routing_key,
                                           body=msg,
@@ -179,38 +189,66 @@ class RabbitMQBase(object):
                                           ))
 
     def subscribe(self, callback, with_pool=True, **kwargs):
-        log("Subscribing with jobs limit: {}".format(self.jobs_limit))
+        self.log("Subscribing with jobs limit: {}".format(self.jobs_limit))
 
         on_message_callback = functools.partial(self.message_handler, args=(
             self.connection, self.threads, callback, with_pool, kwargs))
 
-        self.channel.basic_qos(prefetch_count=int(self.jobs_limit))
+        self.channel.basic_qos(prefetch_count=self.jobs_limit)
         self.channel.basic_consume(queue=self.queue_name,
                                    auto_ack=False,
                                    on_message_callback=on_message_callback)
 
-        log('RabbitMQ subscribed...')
+        self.log('RabbitMQ subscribed...')
+        self.log_active_children()
 
         error = None
         try:
             self.channel.start_consuming()
         except Exception as error:
-            log_error('Closing RabbitMQ: {}'.format(str(error)))
-            self.channel.stop_consuming()
+            self.log('Closing RabbitMQ: {}'.format(str(error)))
+
+        self.channel.stop_consuming()
 
         if not with_pool:
-            # Wait for all to complete
-            for thread in self.threads:
-                thread.join()
+            self.close_threads()
 
-        self.close_connection(error)
+        if with_pool:
+            self.close_pool()
 
-    def close_connection(self, error=None):
+        self.close_connection()
+        self.log_active_children()
+
+        raise error if error else Exception('Error occurred')
+
+    def close_connection(self):
         if self.connection:
             self.connection.close()
 
         self.clear_cache()
-        raise Exception(error)
+
+    def close_pool(self):
+        self.log('About to close the pool')
+        if self.pool_started:
+            try:
+                self.pool.close()
+                # self.pool.join()
+            except Exception as e:
+                self.log(e)
+
+        self.pool = None
+        self.jobs = None
+
+    def close_threads(self):
+        for thread in self.threads:
+            thread.join()
+            thread.close()
+
+        self.threads = []
+
+    def log_active_children(self):
+        active_children = mp.active_children()
+        self.log(f'Active childs: {len(active_children)}')
 
     def clear_cache(self):
         current_app.config[self.cache_key] = None
@@ -220,32 +258,39 @@ class RabbitMQBase(object):
         delivery_tag = method.delivery_tag
         redelivered = method.redelivered
 
+        self.log('Inside message handler')
+
+        if with_pool and not self.pool_started:
+            self.jobs = mp.Manager().Queue()
+
         if with_pool:
             self.jobs.put((body, delivery_tag, extra_args))
 
         if with_pool and not self.pool_started:
-            self.pool = mp.Pool(self.jobs_limit, self.pool_machine, (callback,))
+            self.pool = mp.Pool(self.jobs_limit, self.pool_machine, (callback,), 1)
             self.pool_started = True
-            print(self.pool)
 
         if not with_pool:
             # Implement - https://stackoverflow.com/questions/20886565/using-multiprocessing-process-with-a-maximum-number-of-simultaneous-processes
-            # p = mp.Process(target=callback, args=(connection, channel, delivery_tag, body))
-            # p.start()
-            # threads.append(p)
-            callback(channel, method, body, )
+            p = mp.Process(target=callback, args=(channel, delivery_tag, body, extra_args), name=f"job_{delivery_tag}")
+            p.start()
+            threads.append(p)
 
     def pool_machine(self, callback):
-        log('Inside pool')
+        self.log('Inside pool')
         while True:
             try:
-                log('Awaiting job')
+                self.log('Awaiting job')
                 job = self.jobs.get()
                 (body, delivery_tag, extra_args) = job
-                callback(self.channel, delivery_tag, body, extra_args)
-                log('Job done!!')
+                try:
+                    callback(self.channel, delivery_tag, body, extra_args)
+                except Exception as e:
+                    pass
+
+                self.log('Job done!!')
+                sys.exit(0)
             except queue.Empty:
-                # log('Queue empty breaking')
                 break
             else:
                 pass
@@ -253,7 +298,7 @@ class RabbitMQBase(object):
         return True
 
     def setup_config(self):
-        self.config = RMQConfig.config['RMQ']
+        self.config = current_app.config['RMQ']
         self.queue_name = self.config['QUEUE']
         self.auto_delete = self.config['AUTO_DELETE']
         if not self.exchange:
