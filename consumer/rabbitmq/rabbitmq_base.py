@@ -225,6 +225,7 @@ class RabbitMQBase(object):
         if self.connection:
             self.connection.close()
 
+        self.connection = None
         self.clear_cache()
 
     def close_pool(self):
@@ -240,9 +241,12 @@ class RabbitMQBase(object):
         self.jobs = None
 
     def close_threads(self):
-        for thread in self.threads:
-            thread.join()
-            thread.close()
+        try:
+            for thread in self.threads:
+                thread.join()
+                thread.close()
+        except Exception as e:
+            pass
 
         self.threads = []
 
