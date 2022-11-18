@@ -257,8 +257,7 @@ class RabbitMQBase(object):
         self.threads = []
 
     def log_active_children(self):
-        active_children = mp.active_children()
-        self.log(f'Active childs: {len(active_children)}')
+        self.log(f'Active childs: {len(mp.active_children())}')
 
     def clear_cache(self):
         current_app.config[self.cache_key] = None
@@ -282,7 +281,9 @@ class RabbitMQBase(object):
 
         if not with_pool:
             # Implement - https://stackoverflow.com/questions/20886565/using-multiprocessing-process-with-a-maximum-number-of-simultaneous-processes
-            p = mp.Process(target=callback, args=(channel, delivery_tag, body, extra_args), name=f"job_{delivery_tag}")
+            num_child = mp.active_children()
+            p = mp.Process(target=callback, args=(channel, delivery_tag, body, extra_args),
+                           name=f"proc_{num_child + 1}_{delivery_tag}")
             p.start()
             threads.append(p)
 
