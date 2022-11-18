@@ -208,13 +208,19 @@ class RabbitMQBase(object):
         except Exception as error:
             self.log('Closing RabbitMQ: {}'.format(str(error)))
 
-        self.channel.stop_consuming()
+        try:
+            self.channel.stop_consuming()
+            if not with_pool:
+                self.close_threads()
 
-        if not with_pool:
-            self.close_threads()
+            if with_pool:
+                self.close_pool()
+        except Exception as e:
+            self.log(e)
 
-        if with_pool:
-            self.close_pool()
+            self.pool = None
+            self.jobs = []
+            self.threads = []
 
         self.close_connection()
         self.log_active_children()
@@ -233,17 +239,17 @@ class RabbitMQBase(object):
         if self.pool_started:
             try:
                 self.pool.close()
-                # self.pool.join()
+                self.pool.join(timeout=30)
             except Exception as e:
                 self.log(e)
 
         self.pool = None
-        self.jobs = None
+        self.jobs = []
 
     def close_threads(self):
         try:
             for thread in self.threads:
-                thread.join()
+                thread.join(timeout=30)
                 thread.close()
         except Exception as e:
             pass
