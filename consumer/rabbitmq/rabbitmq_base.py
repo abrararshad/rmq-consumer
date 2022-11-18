@@ -281,9 +281,9 @@ class RabbitMQBase(object):
 
         if not with_pool:
             # Implement - https://stackoverflow.com/questions/20886565/using-multiprocessing-process-with-a-maximum-number-of-simultaneous-processes
-            num_child = mp.active_children()
+            num_child = mp.active_children() + 1
             p = mp.Process(target=callback, args=(channel, delivery_tag, body, extra_args),
-                           name=f"proc_{num_child + 1}_{delivery_tag}")
+                           name=f"proc_{num_child}_{delivery_tag}")
             p.start()
             threads.append(p)
 
