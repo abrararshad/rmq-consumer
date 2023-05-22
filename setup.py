@@ -1,6 +1,7 @@
 from setuptools import setup
 
 setup(
+    py_modules = [],
     install_requires=[
         'Flask',
         'pytest',

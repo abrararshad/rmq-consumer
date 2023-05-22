@@ -14,9 +14,15 @@ def handle_queue(channel, delivery_tag, body, extra_args):
     except Exception as e:
         log_error(e)
         reject_job(channel, delivery_tag)
+        exit_process()
+        return
 
     acknowledge_job(channel, delivery_tag)
+    exit_process()
 
+def exit_process():
+    log('exiting...')
+    exit(0)
 
 def exec_command(data):
     if not data:
@@ -25,9 +31,12 @@ def exec_command(data):
     cwd = RMQConfig.consumer_value('CWD')
     command = RMQConfig.consumer_value('COMMAND')
     command = "{} '{}'".format(command, data)
-    print("Running command: {} in {}".format(command, cwd))
+    log("Running command: {} in {}".format(command, cwd))
     executor = CommandExecutor()
-    with executor.run(command=command, c_progress=None, cwd=cwd) as process:
+
+    # log output to the file
+    log_file = open('{}/{}'.format(RMQConfig.config['APP_LOGS_DIR'], RMQConfig.config['APP']['APP_LOG_NAME']), "a")
+    with executor.run(command=command, c_progress=None, c_stderr=log_file, c_stdout=log_file, cwd=cwd) as process:
         process.communicate()
 
 

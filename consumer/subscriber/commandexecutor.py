@@ -8,10 +8,12 @@ def _p_open(commands, cwd, p_stdin=False, p_stdout=False, p_stderr=subprocess.ST
     stdin_stream = subprocess.PIPE if p_stdin else None
     stdout_stream = subprocess.PIPE if p_stdout else None
     stderr_stream = p_stderr
-    logging.info("Running command: {}".format(commands))
 
-    return subprocess.Popen(shlex.split(commands), stdout=stdout_stream, stderr=stderr_stream, stdin=stdin_stream
+    p = subprocess.Popen(shlex.split(commands), stdout=stdout_stream, stderr=stderr_stream, stdin=stdin_stream
                             , universal_newlines=universal_newlines, cwd=cwd)
+
+    # p.wait()
+    return p
 
 
 class CommandExecutor(object):
@@ -70,7 +72,7 @@ class CommandExecutor(object):
         if callable(self.c_progress):
             self._thread_progress(timeout)
         else:
-            CommandExecutor.out, CommandExecutor.err = self.p.communicate(c_input, timeout=timeout)
+            CommandExecutor.out, CommandExecutor.err = self.p.communicate(c_input)
 
         if self.p.poll():
             error = str(CommandExecutor.err) if CommandExecutor.err else str(CommandExecutor.out)
