@@ -129,7 +129,7 @@ class RabbitMQBase(object):
                 durable=True
             )
 
-        self.bind_queue()
+            self.bind_queue()
 
     def bind_queue(self):
         if not self.config['ROUTING_KEYS']:

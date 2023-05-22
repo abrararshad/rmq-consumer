@@ -5,3 +5,4 @@ rmq_consumer.egg-info
 configuration/envs
 !configuration/envs/sample.yml
 venv
+supervisord.pid
