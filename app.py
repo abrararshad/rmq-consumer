@@ -1,6 +1,5 @@
 import argparse
 from consumer import app as consumer_app, run_app as run_consumer_app
-
 import pydevd_pycharm
 
 
@@ -14,7 +13,18 @@ def boot_app(local=False, config=None, env='local'):
     app_instance = consumer_app.setup_config(config)
     app_instance.setup_dirs()
 
+    print(config)
+    exit
+    # print_config(config)
+
+
     return run_consumer_app(local)
+
+
+def print_config(config):
+    print('Environment:')
+    for k, v in config.items():
+        print("\t{} => {}".format(k, v))
 
 
 if __name__ == '__main__':

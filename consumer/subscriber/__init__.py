@@ -1,24 +1,40 @@
 import time
 from consumer.rabbitmq.queue_subscriber import QueueSubscriber
+from consumer.rabbitmq.rabbitmq_base import RabbitMQRejectionThresholdError
 from utils.func import log, log_error
 from .handler import handle_queue
 
 import pydevd_pycharm
 
-
 # pydevd_pycharm.settrace('172.17.0.1', port=21001, stdoutToServer=True, stderrToServer=True)
+
+MAX_RETRY = 30
+RETRY_DELAY = 5
+RETRY_BACKOFF_FACTOR = 2
 
 
 def connect():
-    try:
-        queue_subscriber = QueueSubscriber(logger=log)
-        queue_subscriber.subscribe(callback=handle_queue, with_pool=False)
-    except Exception as e:
-        log_error(e)
-    finally:
-        connect_back_in = 5
-        log("Reconnecting after {} seconds".format(connect_back_in))
-        time.sleep(connect_back_in)
-        connect()
+    # pydevd_pycharm.settrace('host.docker.internal', port=21001, stdoutToServer=True, stderrToServer=True)
+    retry_count = 0
 
-    exit()
+    while retry_count < MAX_RETRY:
+        try:
+            queue_subscriber = QueueSubscriber(logger=log)
+            queue_subscriber.subscribe(callback=handle_queue, with_pool=False)
+            return  # Successful connection, exit loop
+        except Exception as e:
+            log_error(e)
+            last_error = e
+
+        if isinstance(last_error, RabbitMQRejectionThresholdError):
+            log(f'Not connecting again. {str(last_error)}')
+            exit()
+
+        retry_count += 1
+        if retry_count < MAX_RETRY:
+            wait_time = RETRY_DELAY * (RETRY_BACKOFF_FACTOR ** retry_count)
+            log("Reconnecting after {} seconds".format(wait_time))
+            time.sleep(wait_time)
+
+        log("Max retry limit reached. Exiting...")
+        exit()

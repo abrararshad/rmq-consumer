@@ -5,6 +5,37 @@ import json
 import functools
 import queue
 import pika
+import threading
+
+error_queue = mp.Queue()
+
+
+class RabbitMQRejectionThresholdError(Exception):
+    pass
+
+
+class RabbitMQSubscribeError(Exception):
+    pass
+
+
+ERRORS_THRESHOLD_REACHED = False
+ERRORS_THRESHOLD_LIMIT = 50
+
+
+def error_monitor_thread_callback():
+    global ERRORS_THRESHOLD_REACHED
+    global ERRORS_THRESHOLD_LIMIT
+
+    fatal_error_count = 0
+    while True:
+        if not error_queue.empty():
+            # get count of total errors in queue
+            error_count = error_queue.qsize()
+            if error_count >= ERRORS_THRESHOLD_LIMIT:
+                ERRORS_THRESHOLD_REACHED = True
+                break
+            else:
+                ERRORS_THRESHOLD_REACHED = False
 
 
 class RabbitMQBase(object):
@@ -89,23 +120,37 @@ class RabbitMQBase(object):
 
     def initialize(self):
         self.log('Setting up RabbitMQ with key: {}'.format(self.cache_key))
-        if self.cache_key in current_app.config and current_app.config[self.cache_key] is not None:
-            (connection, channel, queue_name) = current_app.config[self.cache_key]
 
-            # Todo: make sure connection is still valid
-            if connection and channel and queue_name:
-                self.connection = connection
-                self.channel = channel
-                self.queue_name = queue_name
+        cached_connection_info = current_app.config.get(self.cache_key)
+        if cached_connection_info:
+            (cached_connection, cached_channel, cached_queue_name) = cached_connection_info
+
+            if cached_connection and cached_channel and cached_queue_name:
+                # Check the validity of the cached connection
+                try:
+                    cached_channel.basic_publish(
+                        exchange='',  # Use the default exchange for lightweight check
+                        routing_key='test',  # Use a test routing key or queue name
+                        body='test message',
+                        properties=pika.BasicProperties(delivery_mode=1)  # Non-persistent message
+                    )
+                    self.connection = cached_connection
+                    self.channel = cached_channel
+                    self.queue_name = cached_queue_name
+                    self.log("Reusing cached RabbitMQ connection")
+                except (pika.exceptions.ConnectionClosed, pika.exceptions.ChannelClosed):
+                    pass
+                finally:
+                    self.log("Cached connection is no longer valid. Re-establishing connection...")
+                    self.teardown()
+                    self.setup_connection()
             else:
                 self.setup_connection()
         else:
             self.setup_connection()
 
-        self.log("RabbitMQ initialized. Exchange:{} type:{} | Queue:{} | Instance:{}".format(self.exchange,
-                                                                                             self.exchange_type,
-                                                                                             self.queue_name,
-                                                                                             self.new_initialization))
+        self.log("RabbitMQ initialized. Exchange:{} type:{} | Queue:{} | Instance:{}".format(
+            self.exchange, self.exchange_type, self.queue_name, self.new_initialization))
 
     def setup_connection(self):
         self.new_initialization = True
@@ -128,14 +173,14 @@ class RabbitMQBase(object):
             raise e
 
     def declare_amq(self):
-        if self.role_type == 'sender':
-            self.channel.exchange_declare(
-                exchange=self.exchange,
-                exchange_type=self.exchange_type,
-                durable=True
-            )
+        # if self.role_type == 'sender':
+        self.channel.exchange_declare(
+            exchange=self.exchange,
+            exchange_type=self.exchange_type,
+            durable=True
+        )
 
-            self.bind_queue()
+        self.bind_queue()
 
     def bind_queue(self):
         if 'RMQ_BINDING_KEYS' in current_app.config:
@@ -175,18 +220,21 @@ class RabbitMQBase(object):
 
         self.log('RabbmitMQ response: ' + str(response))
         if close_con:
-            self.close_connection()
+            self.teardown()
 
     def publish(self, msg, routing_key='primary.#', priority=0):
-        self.log('Publishing on exchange: {} with routing key: {}'.format(self.exchange, routing_key))
-        return self.channel.basic_publish(exchange=self.exchange,
-                                          routing_key=routing_key,
-                                          body=msg,
-                                          mandatory=True,
-                                          properties=pika.BasicProperties(
-                                              delivery_mode=2,  # Persisting messages
-                                              priority=priority
-                                          ))
+        try:
+            self.log('Publishing on exchange: {} with routing key: {}'.format(self.exchange, routing_key))
+            return self.channel.basic_publish(exchange=self.exchange,
+                                              routing_key=routing_key,
+                                              body=msg,
+                                              mandatory=True,
+                                              properties=pika.BasicProperties(
+                                                  delivery_mode=2,  # Persisting messages
+                                                  priority=priority
+                                              ))
+        except pika.exceptions.UnroutableError:
+            raise RabbitMQSubscribeError("Message could not be routed to any queue")
 
     def subscribe(self, callback, with_pool=True, **kwargs):
         self.log("Subscribing with jobs limit: {}".format(self.jobs_limit))
@@ -202,12 +250,20 @@ class RabbitMQBase(object):
         self.log('RabbitMQ subscribed...')
         self.log_active_children()
 
-        error = None
         try:
+            # Start the error monitoring thread
+            error_monitor_thread = threading.Thread(target=error_monitor_thread_callback)
+            error_monitor_thread.start()
             self.channel.start_consuming()
+        except KeyboardInterrupt:
+            self.log('Consumer stopped by user')
         except Exception as error:
-            self.log('Closing RabbitMQ: {}'.format(str(error)))
+            self.log('Error occurred: {}'.format(str(error)))
+            raise error
+        finally:
+            self.shutdown(with_pool)
 
+    def shutdown(self, with_pool=True):
         try:
             self.channel.stop_consuming()
             if not with_pool:
@@ -218,28 +274,31 @@ class RabbitMQBase(object):
         except Exception as e:
             self.log(e)
 
-            self.pool = None
-            self.jobs = []
-            self.threads = []
-
-        self.close_connection()
+        self.teardown()
         self.log_active_children()
 
-        raise error if error else Exception('Error occurred')
+    def teardown(self):
+        self.close_channel()
+        self.close_connection()
+        self.clear_cache()
 
     def close_connection(self):
         if self.connection:
             self.connection.close()
 
         self.connection = None
-        self.clear_cache()
+
+    def close_channel(self):
+        if self.channel:
+            self.channel.close()
+            self.channel = None
 
     def close_pool(self):
         self.log('About to close the pool')
         if self.pool_started:
             try:
                 self.pool.close()
-                self.pool.join(timeout=30)
+                self.pool.join()
             except Exception as e:
                 self.log(e)
 
@@ -249,10 +308,10 @@ class RabbitMQBase(object):
     def close_threads(self):
         try:
             for thread in self.threads:
-                thread.join(timeout=30)
-                thread.close()
+                thread.join()
+                # thread.close()
         except Exception as e:
-            pass
+            self.log('Error closing threads: {}'.format(e))
 
         self.threads = []
 
@@ -263,6 +322,12 @@ class RabbitMQBase(object):
         current_app.config[self.cache_key] = None
 
     def message_handler(self, channel, method, properties, body, args):
+        global ERRORS_THRESHOLD_REACHED
+        global ERRORS_THRESHOLD_LIMIT
+
+        if ERRORS_THRESHOLD_REACHED:
+            raise RabbitMQRejectionThresholdError(f'Rejection threshold reached {ERRORS_THRESHOLD_LIMIT}')
+
         (connection, threads, callback, with_pool, extra_args) = args
         delivery_tag = method.delivery_tag
         redelivered = method.redelivered
@@ -284,6 +349,7 @@ class RabbitMQBase(object):
             num_child = len(mp.active_children()) + 1
             p = mp.Process(target=callback, args=(channel, delivery_tag, body, extra_args),
                            name=f"proc_{num_child}_{delivery_tag}")
+
             p.start()
             threads.append(p)
 
@@ -297,7 +363,7 @@ class RabbitMQBase(object):
                 try:
                     callback(self.channel, delivery_tag, body, extra_args)
                 except Exception as e:
-                    pass
+                    log('Callback error occurred: {}'.format(str(e)))
 
                 self.log('Job done!!')
                 sys.exit(0)

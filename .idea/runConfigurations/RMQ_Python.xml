@@ -2,7 +2,7 @@
   <configuration default="false" name="WF-Python" type="PyRemoteDebugConfigurationType" factoryName="Python Remote Debug" singleton="false">
     <module name="rmq-consumer" />
     <option name="PORT" value="21001" />
-    <option name="HOST" value="172.17.0.1" />
+    <option name="HOST" value="host.docker.internal" />
     <PathMappingSettings>
       <option name="pathMappings">
         <list />
