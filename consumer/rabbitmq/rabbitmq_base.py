@@ -19,7 +19,7 @@ class RabbitMQSubscribeError(Exception):
 
 
 ERRORS_THRESHOLD_REACHED = False
-ERRORS_THRESHOLD_LIMIT = 5
+ERRORS_THRESHOLD_LIMIT = 25
 
 
 def error_monitor_thread_callback():
