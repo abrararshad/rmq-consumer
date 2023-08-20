@@ -17,6 +17,7 @@ MAIL:
     TO: 'admin@example.com'  # Default recipient email
 
 RMQ:
+  ERRORS_THRESHOLD_LIMIT: 5  # Default error threshold limit
   SERVER: 'rabbitmq.example.com'  # Default RabbitMQ server address
   USER: 'guest'  # Default RabbitMQ username
   PASS: 'guest'  # Default RabbitMQ password

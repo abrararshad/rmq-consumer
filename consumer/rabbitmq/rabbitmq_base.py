@@ -92,6 +92,10 @@ class RabbitMQBase(object):
 
         self.setup_config()
 
+        if self.config['ERRORS_THRESHOLD_LIMIT']:
+            global ERRORS_THRESHOLD_LIMIT
+            ERRORS_THRESHOLD_LIMIT = int(self.config['ERRORS_THRESHOLD_LIMIT'])
+
         self.new_initialization = False
 
         if not self.role_type or self.role_type not in ['subscriber', 'sender']:

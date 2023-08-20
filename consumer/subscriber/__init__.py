@@ -1,6 +1,6 @@
 import time
 from consumer.rabbitmq.queue_subscriber import QueueSubscriber
-from consumer.rabbitmq.rabbitmq_base import RabbitMQRejectionThresholdError
+from consumer.rabbitmq.rabbitmq_base import RabbitMQRejectionThresholdError, error_queue, ERRORS_THRESHOLD_LIMIT
 from utils.func import log, log_error
 from .handler import handle_queue
 from consumer.mail import send_log_email
@@ -40,4 +40,9 @@ def connect():
 
 
 def send_email():
-    send_log_email()
+    logs_lines = []
+    while not error_queue.empty():
+        logs_lines.append(error_queue.get())
+
+    body_prefix = f'<h3>Threshold limit: {ERRORS_THRESHOLD_LIMIT}</h3>'
+    send_log_email(logs_lines=logs_lines, body_prefix=body_prefix)
