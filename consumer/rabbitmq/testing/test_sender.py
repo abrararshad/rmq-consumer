@@ -36,7 +36,7 @@ class RabitMQSenderTests(unittest.TestCase):
                 "entities": [{"id": "1137", "type": "node", "action": "update"}],
                 "ro": {"ips": ["172.18.0.1"], "vis_id": "7d34c16b493de1f22794642565a04fbd"}
             }
-            for _ in range(10)
+            for _ in range(100)
         ]
 
         num_threads = 3

@@ -1,23 +1,31 @@
 APP:
-  ENV: ''
-  APP_LOG_DIR: False
-  APP_LOG_NAME: 'logs.log'
-  SSL_CONTEXT: False
+  ENV: 'development'  # Default environment is set to 'development'
+  APP_LOG_DIR: '/var/log/app'  # Default log directory path
+  APP_LOG_NAME: 'logs.log'  # Default log file name
+  SSL_CONTEXT: True  # Default to using SSL context
 
 CONSUMER:
-  CWD: ''
-  COMMAND: ''
+  CWD: '/path/to/consumer'  # Default current working directory
+  COMMAND: 'python consumer.py'  # Default consumer command
+
+MAIL:
+  LOG_SUBJECT: 'Consumer Stopped - Logs'  # Default email subject
+  LOG_NUM_LINES: 100  # Default number of log lines to include
+  SENDGRID:
+    API_KEY: 'your_sendgrid_api_key'  # Default SendGrid API key
+    FROM: 'noreply@example.com'  # Default sender email
+    TO: 'admin@example.com'  # Default recipient email
 
 RMQ:
-  SERVER: ''
-  USER: ''
-  PASS: ''
-  PORT: 5672
+  SERVER: 'rabbitmq.example.com'  # Default RabbitMQ server address
+  USER: 'guest'  # Default RabbitMQ username
+  PASS: 'guest'  # Default RabbitMQ password
+  PORT: 5672  # Default RabbitMQ port
   EXCHANGE:
-    NAME: ''
-    TYPE: ''
-  QUEUE: ''
-  TIMEOUT: 300
-  HEARTBEAT: 0
-  ROUTING_KEYS: [ '' ]
-  JOBS_LIMIT: 6
+    NAME: 'my_exchange'  # Default exchange name
+    TYPE: 'topic'  # Default exchange type
+  QUEUE: 'my_queue'  # Default queue name
+  TIMEOUT: 300  # Default timeout value
+  HEARTBEAT: 60  # Default heartbeat interval (in seconds)
+  ROUTING_KEYS: [ 'key.default' ]  # Default routing key list
+  JOBS_LIMIT: 6  # Default maximum number of concurrent jobs

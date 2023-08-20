@@ -3,10 +3,8 @@ from consumer.rabbitmq.queue_subscriber import QueueSubscriber
 from consumer.rabbitmq.rabbitmq_base import RabbitMQRejectionThresholdError
 from utils.func import log, log_error
 from .handler import handle_queue
-
+from consumer.mail import send_log_email
 import pydevd_pycharm
-
-# pydevd_pycharm.settrace('172.17.0.1', port=21001, stdoutToServer=True, stderrToServer=True)
 
 MAX_RETRY = 30
 RETRY_DELAY = 5
@@ -28,6 +26,7 @@ def connect():
 
         if isinstance(last_error, RabbitMQRejectionThresholdError):
             log(f'Not connecting again. {str(last_error)}')
+            send_email()
             exit()
 
         retry_count += 1
@@ -38,3 +37,7 @@ def connect():
 
         log("Max retry limit reached. Exiting...")
         exit()
+
+
+def send_email():
+    send_log_email()
