@@ -4,15 +4,31 @@ from consumer.rabbitmq.rabbitmq_base import RabbitMQRejectionThresholdError, err
 from utils.func import log, log_error
 from .handler import handle_queue
 from consumer.mail import send_log_email
+from rmq.config import RMQConfig
 import pydevd_pycharm
 
-MAX_RETRY = 30
+MAX_RETRY = 3
 RETRY_DELAY = 5
 RETRY_BACKOFF_FACTOR = 2
 
 
 def connect():
     # pydevd_pycharm.settrace('host.docker.internal', port=21001, stdoutToServer=True, stderrToServer=True)
+    global MAX_RETRY, RETRY_DELAY, RETRY_BACKOFF_FACTOR
+
+    consumer_config = RMQConfig.consumer_value()
+
+    if 'RETRY' in consumer_config:
+        retry_config = consumer_config['RETRY']
+        if retry_config['MAX_RETRY']:
+            MAX_RETRY = retry_config['MAX_RETRY']
+
+        if retry_config['RETRY_DELAY']:
+            RETRY_DELAY = retry_config['RETRY_DELAY']
+
+        if retry_config['RETRY_BACKOFF_FACTOR']:
+            RETRY_BACKOFF_FACTOR = retry_config['RETRY_BACKOFF_FACTOR']
+
     retry_count = 0
 
     while retry_count < MAX_RETRY:
@@ -26,23 +42,30 @@ def connect():
 
         if isinstance(last_error, RabbitMQRejectionThresholdError):
             log(f'Not connecting again. {str(last_error)}')
-            send_email()
+            send_threshold_reached_email()
             exit()
 
         retry_count += 1
         if retry_count < MAX_RETRY:
             wait_time = RETRY_DELAY * (RETRY_BACKOFF_FACTOR ** retry_count)
-            log("Reconnecting after {} seconds".format(wait_time))
+            log("Reconnecting after {} seconds, remaining attempts are {}".format(wait_time, MAX_RETRY - retry_count))
             time.sleep(wait_time)
 
-        log("Max retry limit reached. Exiting...")
-        exit()
+        if retry_count >= MAX_RETRY:
+            log("Max retry limit reached. Exiting...")
+            send_max_tried_failed_email()
+            exit()
 
 
-def send_email():
+def send_threshold_reached_email():
     logs_lines = []
     while not error_queue.empty():
         logs_lines.append(error_queue.get())
 
     body_prefix = f'<h3>Threshold limit: {ERRORS_THRESHOLD_LIMIT}</h3>'
     send_log_email(logs_lines=logs_lines, body_prefix=body_prefix)
+
+
+def send_max_tried_failed_email():
+    body_prefix = f'<h3>Max retry limit reached: {MAX_RETRY}</h3>'
+    send_log_email(body_prefix=body_prefix)

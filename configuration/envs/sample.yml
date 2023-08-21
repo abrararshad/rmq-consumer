@@ -7,6 +7,10 @@ APP:
 CONSUMER:
   CWD: '/path/to/consumer'  # Default current working directory
   COMMAND: 'python consumer.py'  # Default consumer command
+  RETRY:
+    MAX_RETRY: 3 # Default maximum number of retries
+    RETRY_DELAY: 5 # Default retry delay (in seconds)
+    RETRY_BACKOFF_FACTOR: 2 # Default retry backoff factor
 
 MAIL:
   LOG_SUBJECT: 'Consumer Stopped - Logs'  # Default email subject

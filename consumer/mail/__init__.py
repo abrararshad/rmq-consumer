@@ -4,7 +4,7 @@ from rmq.config import RMQConfig
 from utils.func import log, log_error
 
 
-def send_log_email(logs_lines=None, body_prefix=None):
+def send_log_email(subject=None, logs_lines=None, body_prefix=None):
     mail_config = RMQConfig.mail_value()
     sendgrid_config = mail_config['SENDGRID']
     if 'API_KEY' not in sendgrid_config and sendgrid_config['API_KEY'] is None:
@@ -18,7 +18,11 @@ def send_log_email(logs_lines=None, body_prefix=None):
             lines = log_file.readlines()
             logs_lines = lines[-num_lines:]
 
-    subject = f'{mail_config["LOG_SUBJECT"]} - {RMQConfig.config["APP"]["ENV"]}'
+    if subject is not None:
+        subject += f' - {RMQConfig.config["APP"]["ENV"]}'
+    else:
+        subject = f'{mail_config["LOG_SUBJECT"]} - {RMQConfig.config["APP"]["ENV"]}'
+
     body = '<html><body><h2>Errors</h2>'
     if body_prefix:
         body += body_prefix
