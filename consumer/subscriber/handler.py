@@ -1,11 +1,9 @@
 import os
-from rmq.config import RMQConfig
 from utils.func import log, log_error
 from rmq.config import RMQConfig
-import shlex
-import json
-from consumer.rabbitmq.rabbitmq_base import RabbitMQRejectionThresholdError, error_queue
+from consumer.rabbitmq.rabbitmq_base import error_queue
 from .commandexecutor import CommandExecutor
+from notification import notification_manager
 import pydevd_pycharm
 
 CONSECUTIVE_REJECTIONS_THRESHOLD = 3
@@ -45,17 +43,10 @@ def handle_queue(channel, delivery_tag, body, extra_args):
         log_error(e)
         reject_job(channel, delivery_tag)
 
-        error_queue.put(str(e))
+        error = str(e)
+        error_queue.put(error)
 
-        # consecutive_rejections += 1
-        # total_rejections = get_job_rejections() + 1
-        # set_job_rejections(total_rejections)
-        # log(f'total consecutive rejections: {total_rejections}')
-        # if total_rejections >= CONSECUTIVE_REJECTIONS_THRESHOLD:
-        #     error_msg = f'Exceeded consecutive rejections threshold of {CONSECUTIVE_REJECTIONS_THRESHOLD}'
-        #     log_error(error_msg)
-        #     raise RabbitMQRejectionThresholdError(error_msg)
-
+        notification_manager.send_notifications(subject='Error in consumer', body=error, service_name='discord')
         exit_process()
         return
 

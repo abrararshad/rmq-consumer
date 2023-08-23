@@ -5,15 +5,15 @@ from utils.func import log, log_error
 
 
 def send_log_email(subject=None, logs_lines=None, body_prefix=None):
-    mail_config = RMQConfig.mail_value()
-    sendgrid_config = mail_config['SENDGRID']
+    notif_config = RMQConfig.notification_value()
+    sendgrid_config = notif_config['SENDGRID']
     if 'API_KEY' not in sendgrid_config and sendgrid_config['API_KEY'] is None:
         log_error('SendGrid API key is not set')
         return
 
     if not logs_lines:
         log_file_path = f"{RMQConfig.config['APP_LOGS_DIR']}/{RMQConfig.config['APP_LOG_NAME']}"
-        num_lines = mail_config['LOG_NUM_LINES']
+        num_lines = notif_config['LOG_NUM_LINES']
         with open(log_file_path, 'r') as log_file:
             lines = log_file.readlines()
             logs_lines = lines[-num_lines:]
@@ -21,7 +21,7 @@ def send_log_email(subject=None, logs_lines=None, body_prefix=None):
     if subject is not None:
         subject += f' - {RMQConfig.config["APP"]["ENV"]}'
     else:
-        subject = f'{mail_config["LOG_SUBJECT"]} - {RMQConfig.config["APP"]["ENV"]}'
+        subject = f'{notif_config["SUBJECT"]} - {RMQConfig.config["APP"]["ENV"]}'
 
     body = '<html><body><h2>Errors</h2>'
     if body_prefix:
@@ -34,7 +34,7 @@ def send_log_email(subject=None, logs_lines=None, body_prefix=None):
     to_email = sendgrid_config['TO']
     sendgrid_api_key = sendgrid_config['API_KEY']
 
-    # Create the SendGrid mail object
+    # Create the SendGrid log_mail object
     message = Mail(
         from_email=from_email,
         to_emails=to_email,
@@ -48,7 +48,7 @@ def send_log_email(subject=None, logs_lines=None, body_prefix=None):
         response = sg.send(message)
         log("Email sent successfully!")
     except Exception as e:
-        log_error("An error occurred:", str(e))
+        log_error(f"An error occurred: {str(e)}")
 
 
 def append_logs_body(logs_lines):

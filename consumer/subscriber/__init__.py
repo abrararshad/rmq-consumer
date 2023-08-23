@@ -3,8 +3,8 @@ from consumer.rabbitmq.queue_subscriber import QueueSubscriber
 from consumer.rabbitmq.rabbitmq_base import RabbitMQRejectionThresholdError, error_queue, ERRORS_THRESHOLD_LIMIT
 from utils.func import log, log_error
 from .handler import handle_queue
-from consumer.mail import send_log_email
 from rmq.config import RMQConfig
+from notification import notification_manager
 import pydevd_pycharm
 
 MAX_RETRY = 3
@@ -39,6 +39,7 @@ def connect():
         except Exception as e:
             log_error(e)
             last_error = e
+            notification_manager.send_notifications(f'Error connecting to RabbitMQ: {str(e)}', service_name='discord')
 
         if isinstance(last_error, RabbitMQRejectionThresholdError):
             log(f'Not connecting again. {str(last_error)}')
@@ -63,9 +64,9 @@ def send_threshold_reached_email():
         logs_lines.append(error_queue.get())
 
     body_prefix = f'<h3>Threshold limit: {ERRORS_THRESHOLD_LIMIT}</h3>'
-    send_log_email(logs_lines=logs_lines, body_prefix=body_prefix)
+    notification_manager.send_notifications(body=logs_lines, body_prefix=body_prefix, service_name='log_email')
 
 
 def send_max_tried_failed_email():
     body_prefix = f'<h3>Max retry limit reached: {MAX_RETRY}</h3>'
-    send_log_email(body_prefix=body_prefix)
+    notification_manager.send_notifications(body_prefix=body_prefix, service_name='log_email')

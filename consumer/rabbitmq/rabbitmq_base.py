@@ -1,5 +1,6 @@
 from flask import current_app
 import multiprocessing as mp
+import time
 import sys
 import json
 import functools
@@ -113,6 +114,7 @@ class RabbitMQBase(object):
 
         try:
             self.initialize()
+            self.start_heartbeat_thread()
         except ConnectionError as e:
             raise e
 
@@ -121,6 +123,24 @@ class RabbitMQBase(object):
             self.logger(msg)
         else:
             print(msg)
+
+    def start_heartbeat_thread(self):
+        if self.config['HEARTBEAT'] > 0:
+            heartbeat_thread = threading.Thread(target=self.send_heartbeat)
+            heartbeat_thread.daemon = True
+            heartbeat_thread.start()
+        else:
+            self.log('Heartbeat disabled')
+
+    def send_heartbeat(self):
+        while True:
+            if self.connection and self.channel:
+                try:
+                    self.channel.connection.process_data_events()  # Send heartbeat signal
+                    print('heartbeat sent')
+                except Exception as e:
+                    print(f"Error sending heartbeat: {e}")
+            time.sleep(self.config['HEARTBEAT'] // 2)  # Send heartbeat every half of the heartbeat interval
 
     def initialize(self):
         self.log('Setting up RabbitMQ with key: {}'.format(self.cache_key))

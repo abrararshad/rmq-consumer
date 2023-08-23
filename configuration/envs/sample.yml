@@ -12,13 +12,15 @@ CONSUMER:
     RETRY_DELAY: 5 # Default retry delay (in seconds)
     RETRY_BACKOFF_FACTOR: 2 # Default retry backoff factor
 
-MAIL:
-  LOG_SUBJECT: 'Consumer Stopped - Logs'  # Default email subject
+NOTIFICATION:
+  SUBJECT: 'Consumer Stopped - Logs'  # Default email subject
   LOG_NUM_LINES: 100  # Default number of log lines to include
   SENDGRID:
     API_KEY: 'your_sendgrid_api_key'  # Default SendGrid API key
     FROM: 'noreply@example.com'  # Default sender email
     TO: 'admin@example.com'  # Default recipient email
+  DISCORD:
+    WEBHOOK_URL: 'your_discord_webhook_url'  # Default Discord webhook URL
 
 RMQ:
   ERRORS_THRESHOLD_LIMIT: 5  # Default error threshold limit
