@@ -35,8 +35,10 @@ def handle_queue(channel, delivery_tag, body, extra_args):
     global consecutive_rejections
 
     data = body.decode("utf-8")
+    command, cwd = prepare_command(data)
     try:
-        exec_command(data)
+        log("Running command: {} in {}".format(command, cwd))
+        exec_command(command, cwd)
         # set_job_rejections(0)
         error_queue.empty()
     except Exception as e:
@@ -46,7 +48,8 @@ def handle_queue(channel, delivery_tag, body, extra_args):
         error = str(e)
         error_queue.put(error)
 
-        notification_manager.send_notifications(subject='Error in consumer', body=error, service_name='discord')
+        error_body = f'Running command: {command}   in   {cwd} \n\n Failed with error: {error}'
+        notification_manager.send_notifications(subject='Error in consumer', body=error_body, service_name='discord')
         exit_process()
         return
 
@@ -59,14 +62,17 @@ def exit_process():
     exit(0)
 
 
-def exec_command(data):
+def prepare_command(data):
     if not data:
         return None
 
     cwd = RMQConfig.consumer_value('CWD')
     command = RMQConfig.consumer_value('COMMAND')
     command = "{} '{}'".format(command, data)
-    log("Running command: {} in {}".format(command, cwd))
+    return command, cwd
+
+
+def exec_command(command, cwd):
     executor = CommandExecutor()
 
     # log output to the file

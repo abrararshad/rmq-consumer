@@ -233,7 +233,7 @@ class RabbitMQBase(object):
                 )
                 self.log('Queue:%s bound to key:%s ' % (self.queue_name, binding))
 
-    def send(self, msg_object, routing_key='primary.#', priority=0, close_con=False):
+    def send(self, msg_object, routing_key='primary', priority=0, close_con=False):
         try:
             msg = json.dumps(msg_object)
             response = self.publish(msg, routing_key, priority)
@@ -350,7 +350,7 @@ class RabbitMQBase(object):
         global ERRORS_THRESHOLD_LIMIT
 
         if ERRORS_THRESHOLD_REACHED:
-            raise RabbitMQRejectionThresholdError(f'Rejection threshold reached {ERRORS_THRESHOLD_LIMIT}')
+            raise RabbitMQRejectionThresholdError(f'Rejection threshold limit of {ERRORS_THRESHOLD_LIMIT} tries reached')
 
         (connection, threads, callback, with_pool, extra_args) = args
         delivery_tag = method.delivery_tag
