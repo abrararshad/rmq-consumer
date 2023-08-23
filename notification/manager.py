@@ -1,5 +1,6 @@
 from .service import NotificationService
 from rmq.config import RMQConfig
+from utils.func import log
 
 
 class NotificationManager:
@@ -21,3 +22,4 @@ class NotificationManager:
 
             body_prefix += f'\n[{global_ip}][{RMQConfig.config["APP"]["ENV"]}]'
             service.send_notification(subject, body, body_prefix)
+            log(f'Sent notification to {service.name}')

@@ -46,7 +46,7 @@ def send_log_email(subject=None, logs_lines=None, body_prefix=None):
     try:
         sg = SendGridAPIClient(sendgrid_api_key)
         response = sg.send(message)
-        log("Email sent successfully!")
+        # log("Email sent successfully!")
     except Exception as e:
         log_error(f"An error occurred: {str(e)}")
 
