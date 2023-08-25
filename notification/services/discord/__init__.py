@@ -1,5 +1,6 @@
 from notification.service import NotificationService
 from discordwebhook import Discord
+from utils.log import log_error
 
 
 class DiscordService(NotificationService):
@@ -9,4 +10,7 @@ class DiscordService(NotificationService):
 
     def send_notification(self, subject=None, body=None, body_prefix=None):
         message = f'{subject}\n{body_prefix}\n{body}\n------------------\n'
-        self.discord.post(content=message)
+        try:
+            self.discord.post(content=message)
+        except Exception as e:
+            log_error(e)
