@@ -1,6 +1,6 @@
 from notification.service import NotificationService
 from discordwebhook import Discord
-from utils.log import log_error
+from utils.func import log_error
 
 
 class DiscordService(NotificationService):
