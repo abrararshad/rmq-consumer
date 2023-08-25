@@ -52,10 +52,10 @@ def connect():
             log("Reconnecting after {} seconds, remaining attempts are {}".format(wait_time, MAX_RETRY - retry_count))
             time.sleep(wait_time)
 
-        if retry_count >= MAX_RETRY:
-            log("Max retry limit reached. Exiting...")
-            send_max_tried_failed_email()
-            exit()
+    if retry_count >= MAX_RETRY:
+        log("Max retry limit reached. Exiting...")
+        send_max_tried_failed_email()
+        exit()
 
 
 def send_threshold_reached_email():
