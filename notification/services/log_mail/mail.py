@@ -2,9 +2,10 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
 from rmq.config import RMQConfig
 from utils.func import log, log_error
+import pydevd_pycharm
 
-
-def send_log_email(subject=None, logs_lines=None, body_prefix=None):
+def send_log_email(subject=None, logs_lines=None, body_prefix=None, command = None):
+    # pydevd_pycharm.settrace('host.docker.internal', port=21001, stdoutToServer=True, stderrToServer=True)
     notif_config = RMQConfig.notification_value()
     sendgrid_config = notif_config['SENDGRID']
     if 'API_KEY' not in sendgrid_config and sendgrid_config['API_KEY'] is None:
@@ -23,7 +24,11 @@ def send_log_email(subject=None, logs_lines=None, body_prefix=None):
     else:
         subject = f'{notif_config["SUBJECT"]} - {RMQConfig.config["APP"]["ENV"]}'
 
-    body = '<html><body><h2>Errors</h2>'
+    body = ''
+    if command is not None:
+        body += f'COMMAND: {command}'
+
+    body += '<html><body><h2>Errors</h2>'
     if body_prefix:
         body += body_prefix
 
@@ -56,6 +61,9 @@ def append_logs_body(logs_lines):
 
     # Add header row
     body += '<tr><th>Line Number</th><th>Log Entry</th></tr>'
+
+    # log_lines is a long text string, lets splitit into lines with a newline character
+    logs_lines = logs_lines.split('\n')
 
     # Add log lines with alternating background colors
     for idx, line in enumerate(logs_lines):

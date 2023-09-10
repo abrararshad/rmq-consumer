@@ -44,7 +44,6 @@ def connect():
         if isinstance(last_error, RabbitMQRejectionThresholdError):
             log(f'Not connecting again. {str(last_error)}')
             send_threshold_reached_email()
-            exit()
 
         retry_count += 1
         if retry_count < MAX_RETRY:

@@ -8,8 +8,13 @@ class DiscordService(NotificationService):
         self.name = 'discord'
         self.discord = Discord(url=webhook_url)
 
-    def send_notification(self, subject=None, body=None, body_prefix=None):
-        message = f'{subject}\n{body_prefix}\n{body}\n------------------\n'
+    def send_notification(self, subject=None, body=None, body_prefix=None, command = None):
+        message = ''
+        if command:
+            message += f'COMMAND: {command}\n'        
+
+        message += f'{subject}\n{body_prefix}\n{body}\n------------------\n'
+
         try:
             self.discord.post(content=message)
         except Exception as e:

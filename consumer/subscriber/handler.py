@@ -49,7 +49,7 @@ def handle_queue(channel, delivery_tag, body, extra_args):
         error_queue.put(error)
 
         error_body = f'Running command: {command}   in   {cwd} \n\n Failed with error: {error}'
-        notification_manager.send_notifications(subject='Error in consumer', body=error_body, service_name='discord')
+        notification_manager.send_notifications(subject='Error in consumer', body=error_body, command=command)
         exit_process()
         return
 

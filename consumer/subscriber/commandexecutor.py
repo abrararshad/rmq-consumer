@@ -10,18 +10,18 @@ def _p_open(commands, cwd, p_stdin=False, p_stdout=False, p_stderr=subprocess.ST
     stderr_stream = p_stderr
 
     p = subprocess.Popen(shlex.split(commands), stdout=stdout_stream, stderr=stderr_stream, stdin=stdin_stream
-                            , universal_newlines=universal_newlines, cwd=cwd)
+                         , universal_newlines=universal_newlines, cwd=cwd)
 
     # p.wait()
     return p
 
 
 class CommandExecutor(object):
-    out = None
-    err = None
-
-    c_progress = None
-    p = None
+    def __init__(self):
+        self.out = None
+        self.err = None
+        self.c_progress = None
+        self.p = None
 
     def run(self, command, c_progress, cwd, c_stdout=None, c_stderr=None, c_stdin=None):
         self.c_progress = c_progress
@@ -30,6 +30,10 @@ class CommandExecutor(object):
         else:
             self.p = _p_open(command, cwd, c_stdin, c_stdout, subprocess.PIPE if c_stderr else False)
 
+        # Clear the previous output and error data
+        self.out = None
+        self.err = None
+
         return self
 
     def __enter__(self):
@@ -37,6 +41,7 @@ class CommandExecutor(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.p.kill()
+        self.p.wait()  # Wait for the subprocess to terminate
 
     def kill(self):
         self.p.kill()
@@ -54,7 +59,7 @@ class CommandExecutor(object):
 
             self.c_progress(line)
 
-        CommandExecutor.out = log
+        self.out = log
 
     def _thread_progress(self, timeout):
         thread = threading.Thread(target=self._show_progress)
@@ -72,13 +77,13 @@ class CommandExecutor(object):
         if callable(self.c_progress):
             self._thread_progress(timeout)
         else:
-            CommandExecutor.out, CommandExecutor.err = self.p.communicate(c_input)
+            self.out, self.err = self.p.communicate(c_input)
 
-        if self.p.poll():
-            error = str(CommandExecutor.err) if CommandExecutor.err else str(CommandExecutor.out)
+        if self.p.returncode != 0:
+            error = str(self.err) if self.err else str(self.out)
             logging.error('Failed to execute command: {}'.format(error))
             raise RuntimeError('Failed to execute command: ', error)
 
         logging.info("Executed command successfully")
 
-        return CommandExecutor.out, CommandExecutor.err
+        return self.out, self.err
