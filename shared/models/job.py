@@ -5,9 +5,10 @@ from .base.model import BaseModel
 
 class Job(BaseModel):
     def __init__(self, collection, config=None):
-        self.cmd_hash = StringField()
+        self.hash = StringField()
+        self.cwd = StringField()
         self.command = StringField()
-        self.status = IntegerField(JobStatus.SUCCESS)
+        self.status = IntegerField(None)
         self.error = StringField()
         self.retry = IntegerField(0)
 
@@ -16,3 +17,16 @@ class Job(BaseModel):
     def add(self, data):
         super().save(data)
         return self
+
+    def attempt(self):
+        self.retry += 1
+        self.save()
+
+    def success(self):
+        self.status = JobStatus.SUCCESS
+        self.save()
+
+    def fail(self, error):
+        self.status = JobStatus.ERROR
+        self.error = error
+        self.save()

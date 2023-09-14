@@ -2,7 +2,6 @@ from modules.mongo_normalizer import MongoNormalizer
 from bson.objectid import ObjectId
 from utils.func import cal_timestamp, log, log_error
 from .field import BaseField, MongoIDField, IntegerField, FloatField, StringField, BooleanField
-from shared.signals.namespaces import model_presave
 import pydevd_pycharm
 
 
@@ -82,7 +81,6 @@ class BaseModel(object):
         return ObjectId(self.id)
 
     def save(self, data=None):
-        model_presave.send(self)
         self.set_bulk_fields(data)
 
         fields = {}

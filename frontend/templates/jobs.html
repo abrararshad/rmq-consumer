@@ -1,0 +1,30 @@
+{% extends "main.html" %}
+
+{% block title %}
+    Jobs
+{% endblock %}
+
+{% block content %}
+    <div class="table-container">
+        <div class="table-row header">
+            <div class="table-cell">Hash</div>
+            <div class="table-cell">Command</div>
+            <div class="table-cell">Status</div>
+            <div class="table-cell">Error</div>
+            <div class="table-cell">Retry</div>
+            <div class="table-cell">Counts</div>
+            <div class="table-cell">Created</div>
+        </div>
+        {% for job in jobs %}
+            <div class="table-row">
+                <div class="table-cell"><a href="{{ url_for('get_job', hash=job["hash"]) }}"> {{ job["hash"]  }}</a></div>
+                <div class="table-cell">{{ job["command"] }}</div>
+                <div class="table-cell">{{ job["status"] }}</div>
+                <div class="table-cell">{{ job["error"] }}</div>
+                <div class="table-cell">{{ job["retry"] }}</div>
+                <div class="table-cell">{{ job["count"] }}</div>
+                <div class="table-cell">{{ job["created"]|ctime }}</div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "main.html" %}
+
+{% block title %}
+    {{ job['hash'] }}
+{% endblock %}
+
+{% block content %}
+    <div class="col-xl-12">
+        <h3> Command </h3>
+        {{ job['command'] }}
+    </div>
+    <hr/>
+    <div class="col-xl-12">
+        <h3> Error </h3>
+        {{ job['error'] }}
+    </div>
+
+    <br /><br />
+    <div class="col-xl-12">
+        <a href="{{ url_for('run_job', hash=job['hash']) }}" target="_blank" class="btn btn-primary">Run</a>
+    </div>
+
+{% endblock %}

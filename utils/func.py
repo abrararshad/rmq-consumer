@@ -1,8 +1,18 @@
+import time
+import calendar
 import yaml
 from flask import current_app
-import traceback
+import hashlib
 from multiprocessing import current_process
 from rmq.config import RMQConfig
+import traceback
+
+
+def cal_timestamp(time_from=None):
+    if not time_from:
+        time_from = time.gmtime()
+
+    return calendar.timegm(time_from)
 
 
 def load_yaml(path):
@@ -30,3 +40,14 @@ def log_error(msg):
 
     if env == 'local':
         print(msg)
+
+
+def print_cursor_data(cursor):
+    for document in cursor:
+        print(document)
+        # for key in document:
+        #     print(key)
+
+
+def md5_hash(string):
+    return hashlib.md5(string.encode()).hexdigest()

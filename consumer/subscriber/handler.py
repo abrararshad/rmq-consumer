@@ -1,9 +1,10 @@
 import os
-from utils.func import log, log_error
+from utils.func import log, log_error, md5_hash
 from rmq.config import RMQConfig
 from consumer.rabbitmq.rabbitmq_base import error_queue
 from .commandexecutor import CommandExecutor
 from notification import notification_manager
+from shared.services import JobService
 import pydevd_pycharm
 
 CONSECUTIVE_REJECTIONS_THRESHOLD = 3
@@ -36,6 +37,13 @@ def handle_queue(channel, delivery_tag, body, extra_args):
 
     data = body.decode("utf-8")
     command, cwd = prepare_command(data)
+
+    hash = md5_hash(f"{cwd}{command}")
+    job = JobService.find_by_hash(hash=hash)
+    if not job:
+        job = JobService.create({'hash': hash, 'command': command, 'cwd': cwd, 'retry': 0})
+
+    job.attempt()
     try:
         log("Running command: {} in {}".format(command, cwd))
         exec_command(command, cwd)
@@ -43,16 +51,20 @@ def handle_queue(channel, delivery_tag, body, extra_args):
         error_queue.empty()
     except Exception as e:
         log_error(e)
-        reject_job(channel, delivery_tag)
 
         error = str(e)
         error_queue.put(error)
 
         error_body = f'Running command: {command}   in   {cwd} \n\n Failed with error: {error}'
+        job.fail(error_body)
+
         notification_manager.send_notifications(subject='Error in consumer', body=error_body, command=command)
+        reject_job(channel, delivery_tag, job)
+
         exit_process()
         return
 
+    job.success()
     acknowledge_job(channel, delivery_tag)
     exit_process()
 
@@ -96,9 +108,13 @@ def acknowledge_job(channel, delivery_tag):
         log(e)
 
 
-def reject_job(channel, delivery_tag):
+def reject_job(channel, delivery_tag, job):
     try:
+        requeue = True
+        if job.retry > 1:
+            requeue = False
+
         log('Rejecting  tag:' + str(delivery_tag))
-        channel.basic_reject(delivery_tag=delivery_tag, requeue=True)
+        channel.basic_reject(delivery_tag=delivery_tag, requeue=requeue)
     except Exception as e:
         log(e)

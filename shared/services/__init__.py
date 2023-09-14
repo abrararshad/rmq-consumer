@@ -10,4 +10,6 @@ job_collection = mongo.db.job
 
 JobService = JobService(current_app, job_collection)
 
-__all__ = []
+__all__ = [
+    'JobService'
+]
