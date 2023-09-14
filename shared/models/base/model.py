@@ -1,0 +1,172 @@
+from modules.mongo_normalizer import MongoNormalizer
+from bson.objectid import ObjectId
+from utils.func import cal_timestamp, log, log_error
+from .field import BaseField, MongoIDField, IntegerField, FloatField, StringField, BooleanField
+from shared.signals.namespaces import model_presave
+import pydevd_pycharm
+
+
+# pydevd_pycharm.settrace('host.docker.internal', port=21000, stdoutToServer=True, stderrToServer=True)
+
+class ValueErrorException(Exception):
+    pass
+
+
+class BaseModel(object):
+    def __init__(self, collection, config=None):
+        self.id = MongoIDField()
+        self.deleted = BooleanField(False)
+        self.created = BaseField()
+        self.changed = BaseField()
+
+        self._collection = collection
+        self.config = config
+
+        if self.id:
+            self.initialize()
+
+    def __setattr__(self, key, value):
+        try:
+            attr = object.__getattribute__(self, key)
+            if attr and isinstance(attr, BaseField):
+                try:
+                    update_func = '{}_alter_value'.format(key)
+                    # if object.__getattribute__(self, update_func):
+                    if hasattr(self, update_func):
+                        value = getattr(self, update_func)(value)
+                except Exception as e:
+                    log_error(e)
+                    raise ValueErrorException(e)
+
+                if isinstance(attr, MongoIDField):
+                    object.__setattr__(self, key, MongoIDField(value))
+                else:
+                    data_type_mappings = {
+                        'FloatField': FloatField,
+                        'IntegerField': IntegerField,
+                        'StringField': StringField,
+                        'BooleanField': BooleanField
+                    }
+
+                    field_type_class = type(attr).__name__
+                    field_class = data_type_mappings.get(field_type_class)
+                    if field_class:
+                        value = field_class(value)
+                    else:
+                        value = BaseField(value)
+
+                    object.__setattr__(self, key, value)
+        except Exception as e:
+            object.__setattr__(self, key, value)
+
+            # exception is of type ValueErrorException then raise it
+            if isinstance(e, ValueErrorException):
+                raise e
+
+    def __getattribute__(self, key):
+        try:
+            attr = object.__getattribute__(self, key)
+            if attr and isinstance(attr, BaseField):
+                return attr.value
+
+        except:
+            pass
+
+        return object.__getattribute__(self, key)
+
+    def get(self, model_id):
+        model = self._collection.find_one({'_id': ObjectId(model_id)})
+        return self.initialize(model)
+
+    def get_id(self):
+        return ObjectId(self.id)
+
+    def save(self, data=None):
+        model_presave.send(self)
+        self.set_bulk_fields(data)
+
+        fields = {}
+        attrs = self.__dict__
+        for k, v in attrs.items():
+            if isinstance(v, MongoIDField):
+                fields[k] = ObjectId(v.value) if v.value else None
+            elif isinstance(v, BaseField):
+                fields[k] = v.value
+
+        if fields:
+            try:
+                self._perform_insert_or_update(fields)
+                return self.initialize()
+            except Exception as e:
+                raise Exception('{} could not be saved. Error: {}'.format(self.__class__.__name__, e))
+
+    def _perform_insert_or_update(self, fields):
+        fields['changed'] = cal_timestamp()
+
+        # delete id in any case
+        if 'id' in fields:
+            del fields['id']
+
+        try:
+            if not self.id:
+                fields['created'] = fields['changed']
+                result = self._collection.insert_one(fields)
+                self.id = str(result.inserted_id)
+            else:
+                result = self._collection.replace_one({'_id': ObjectId(self.id)}, fields)
+        except Exception as e:
+            raise Exception(e)
+
+    def delete(self, soft_delete=False):
+        if self.id:
+            if not soft_delete:
+                self._collection.delete_one({"_id": ObjectId(self.id)})
+            else:
+                self.deleted = True
+                self.save()
+
+    def initialize(self, model=None):
+        if isinstance(model, BaseModel):
+            return model
+
+        if not model:
+            model = self._collection.find_one({'_id': ObjectId(self.id)})
+
+        if not model:
+            raise Exception('Cannot initialize ' + self.__module__)
+
+        normalized = MongoNormalizer.deserialize(model)
+        for k, v in self.get_fields().items():
+            # Check to prevent any missing/new column from being initialized
+            if k in normalized or (k == 'id' and '_' + k in normalized):
+                self.__dict__[k].value = normalized['_' + k if k == 'id' else k]
+
+        return self
+
+    def get_fields(self):
+        fields = {}
+        attrs = self.__dict__
+        for k, v in attrs.items():
+            if isinstance(v, BaseField):
+                fields[k] = v.value
+
+        return fields
+
+    def set_bulk_fields(self, data):
+        if data:
+            for k in data:
+                self.__setattr__(k, data[k])
+
+    def toDict(self):
+        return {
+            'id': self.id,
+            'created': self.created,
+            'changed': self.changed
+        }
+
+    @staticmethod
+    def mongo_id(mongo_id):
+        return ObjectId(mongo_id)
+
+    def get_type(self):
+        return type(self).__name__.lower()

@@ -4,6 +4,9 @@ APP:
   APP_LOG_NAME: 'logs.log'  # Default log file name
   SSL_CONTEXT: True  # Default to using SSL context
 
+MONGO:
+  URI: ''
+
 CONSUMER:
   CWD: '/path/to/consumer'  # Default current working directory
   COMMAND: 'python consumer.py'  # Default consumer command
