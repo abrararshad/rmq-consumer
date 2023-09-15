@@ -1,7 +1,7 @@
 from modules.mongo_normalizer import MongoNormalizer
 from bson.objectid import ObjectId
 from utils.func import cal_timestamp, log, log_error
-from .field import BaseField, MongoIDField, IntegerField, FloatField, StringField, BooleanField
+from .field import BaseField, MongoIDField, IntegerField, FloatField, StringField, BooleanField, MapField
 import pydevd_pycharm
 
 
@@ -23,6 +23,23 @@ class BaseModel(object):
 
         if self.id:
             self.initialize()
+
+    def convert_value_by_field_type(self, field_name, value):
+        attr = object.__getattribute__(self, field_name)
+        if attr and isinstance(attr, StringField):
+            return str(value)
+        elif attr and isinstance(attr, IntegerField):
+            return int(value)
+        elif attr and isinstance(attr, FloatField):
+            return float(value)
+        elif attr and isinstance(attr, BooleanField):
+            return bool(value)
+        elif attr and isinstance(attr, MongoIDField):
+            return ObjectId(value)
+        elif attr and isinstance(attr, MapField):
+            return dict(value)
+        else:
+            return value
 
     def __setattr__(self, key, value):
         try:

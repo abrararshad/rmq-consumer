@@ -1,8 +1,7 @@
 import os
-from flask import Flask
 from .logger.extensions import logs
 from .logger import settings as LoggingSettings
-from flask import jsonify
+from flask import Flask, jsonify
 from utils.func import load_yaml
 from utils.struct import Struct
 import pydevd_pycharm
