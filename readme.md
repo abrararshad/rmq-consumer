@@ -28,7 +28,7 @@ Once run its available at ```example.com/logger```.
 In all above `local` is the environment name, it will look for a config file with the same name in `configuration/evs` folder. `true` is the local server mode.
 
 # Configs
-Take a [sample.yml](configurations/envs/sample.yml) from ```configuration/evs``` folder and create a new file for an environment such as ```dev_config.yml``` or ```prod_config.yml```
+Take a [sample.yml](configuration/envs/sample.yml) from ```configuration/evs``` folder and create a new file for an environment such as ```dev_config.yml``` or ```prod_config.yml```
 
 # Installation
 ``` 
