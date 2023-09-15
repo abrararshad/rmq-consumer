@@ -85,3 +85,18 @@ class FloatField(BaseField):
     def value(self, value):
         if value:
             self._value = float(value)
+
+
+class MapField(BaseField):
+    @property
+    def value(self):
+        v = super().value
+        if v:
+            return dict(v)
+        else:
+            return {}
+
+    @value.setter
+    def value(self, value):
+        if value:
+            self._value = dict(value)

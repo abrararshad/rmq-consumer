@@ -1,8 +1,6 @@
 from flask import current_app
 from datetime import datetime
 import time
-import jinja2
-from pprint import pprint
 
 @current_app.template_filter('ctime')
 def timectime(s):
@@ -11,6 +9,10 @@ def timectime(s):
 @current_app.template_filter('print_vars')
 def print_vars(obj):
     return dir(obj)
+
+@current_app.template_filter('pretty_json')
+def pretty_json(data):
+    return json.dumps(data, indent=4)
 
 @current_app.template_filter('pretty_date')
 def pretty_date(time=False):

@@ -1,4 +1,4 @@
-from .base.field import StringField, IntegerField
+from .base.field import StringField, IntegerField, MapField
 from shared.types import JobStatus
 from .base.model import BaseModel
 
@@ -7,7 +7,8 @@ class Job(BaseModel):
     def __init__(self, collection, config=None):
         self.hash = StringField()
         self.cwd = StringField()
-        self.command = StringField()
+        self.command_args = MapField()
+        self.executor = StringField()
         self.status = IntegerField(None)
         self.error = StringField()
         self.retry = IntegerField(0)

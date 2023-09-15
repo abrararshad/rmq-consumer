@@ -1,14 +1,14 @@
-from rmq import RMQ
+from app_initializer import AppInitializer
 
-app = RMQ(__name__)
+app = AppInitializer(__name__)
 
 
 def run_app(run_server=True):
     with app.app_context():
-        app.setup_logger(app.config['APP']['APP_LOG_NAME'])
+        app.setup_logger()
         from utils.func import log
 
-        from rmq.config import RMQConfig
+        from app_initializer.config import RMQConfig
         RMQConfig.set_app(app)
 
         if not RMQConfig.config['TESTING']:

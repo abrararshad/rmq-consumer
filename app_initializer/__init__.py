@@ -5,11 +5,14 @@ from .logger import settings as LoggingSettings
 from flask import jsonify
 from utils.func import load_yaml
 from utils.struct import Struct
+import pydevd_pycharm
 
 
-class RMQ(Flask):
+# pydevd_pycharm.settrace('host.docker.internal', port=21001, stdoutToServer=True, stderrToServer=True)
+
+class AppInitializer(Flask):
     def __init__(self, import_name, static_url_path=''):
-        super(RMQ, self).__init__(import_name, static_url_path=static_url_path)
+        super(AppInitializer, self).__init__(import_name, static_url_path=static_url_path)
         self.register_error_handler(404, self.not_found)
 
     def not_found(self, error):
@@ -17,7 +20,6 @@ class RMQ(Flask):
 
     def setup_config(self, config):
         self.config.from_object(config)
-        self.inject_config()
         self.config['APP_ROOT'] = os.getcwd()
 
         return self
@@ -44,27 +46,11 @@ class RMQ(Flask):
 
         return Struct(**config)
 
-    def inject_config(self):
-        global_config = load_yaml('configuration/global_config.yml')
-
-        if global_config:
-            for key in global_config:
-                self.config[key] = global_config[key]
-
-        if global_config:
-            for key in global_config:
-                self.config[key] = global_config[key]
-
-    def setup_logger(self, log_file=None, log_dir=None):
+    def setup_logger(self):
         self.config.from_object(LoggingSettings)
-        
-        if log_dir:
-            self.config['LOG_DIR'] = log_dir
-        else:
-            self.config['LOG_DIR'] = self.config['APP_LOGS_DIR']
 
-        if log_file:
-            self.config['APP_LOG_NAME'] = log_file
+        self.config['LOG_DIR'] = self.config['APP_LOGS_DIR']
+        self.config['APP_LOG_NAME'] = self.config['LOG_FILES'][self.name.split('.')[1].upper()]
 
         logs.init_app(self)
 
@@ -84,7 +70,7 @@ class RMQ(Flask):
 
         try:
             for path in paths:
-                RMQ.create_app_dir(path)
+                AppInitializer.create_app_dir(path)
         except Exception as e:
             raise Exception('Could not create directories: {}'.format(e))
 

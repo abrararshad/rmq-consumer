@@ -1,5 +1,5 @@
 from .service import NotificationService
-from rmq.config import RMQConfig
+from app_initializer.config import RMQConfig
 from utils.func import log
 
 

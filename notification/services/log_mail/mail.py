@@ -1,6 +1,6 @@
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
-from rmq.config import RMQConfig
+from app_initializer.config import RMQConfig
 from utils.func import log, log_error
 import pydevd_pycharm
 
@@ -62,8 +62,9 @@ def append_logs_body(logs_lines):
     # Add header row
     body += '<tr><th>Line Number</th><th>Log Entry</th></tr>'
 
-    # log_lines is a long text string, lets splitit into lines with a newline character
-    logs_lines = logs_lines.split('\n')
+    # if log_lines is not a list
+    if not isinstance(logs_lines, list):
+        logs_lines = logs_lines.split('\n')
 
     # Add log lines with alternating background colors
     for idx, line in enumerate(logs_lines):

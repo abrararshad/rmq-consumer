@@ -4,7 +4,7 @@ import yaml
 from flask import current_app
 import hashlib
 from multiprocessing import current_process
-from rmq.config import RMQConfig
+from app_initializer.config import RMQConfig
 import traceback
 
 

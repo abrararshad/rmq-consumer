@@ -1,11 +1,11 @@
 import os
+import json
 from utils.func import log, log_error, md5_hash
-from rmq.config import RMQConfig
-from consumer.rabbitmq.rabbitmq_base import error_queue
+from app_initializer.config import RMQConfig
+from apps.consumer.rabbitmq.rabbitmq_base import error_queue
 from .commandexecutor import CommandExecutor
 from notification import notification_manager
 from shared.services import JobService
-import pydevd_pycharm
 
 CONSECUTIVE_REJECTIONS_THRESHOLD = 3
 consecutive_rejections = 0
@@ -36,12 +36,20 @@ def handle_queue(channel, delivery_tag, body, extra_args):
     global consecutive_rejections
 
     data = body.decode("utf-8")
-    command, cwd = prepare_command(data)
+
+    try:
+        command_args = json.loads(body.decode("utf-8"))
+    except Exception as e:
+        log_error(f'Error decoding data: {e}')
+        return None
+
+    executor, command, cwd = prepare_command(data)
 
     hash = md5_hash(f"{cwd}{command}")
     job = JobService.find_by_hash(hash=hash)
     if not job:
-        job = JobService.create({'hash': hash, 'command': command, 'cwd': cwd, 'retry': 0})
+        job = JobService.create(
+            {'hash': hash, 'executor': executor, 'command_args': command_args, 'cwd': cwd, 'retry': 0})
 
     job.attempt()
     try:
@@ -79,9 +87,9 @@ def prepare_command(data):
         return None
 
     cwd = RMQConfig.consumer_value('CWD')
-    command = RMQConfig.consumer_value('COMMAND')
-    command = "{} '{}'".format(command, data)
-    return command, cwd
+    executor = RMQConfig.consumer_value('COMMAND')
+    command = "{} '{}'".format(executor, data)
+    return executor, command, cwd
 
 
 def exec_command(command, cwd):

@@ -1,8 +1,17 @@
+BASIC_AUTH_USERNAME: "admin"
+BASIC_AUTH_PASSWORD: "admin"
+
 APP:
   ENV: 'development'  # Default environment is set to 'development'
   APP_LOG_DIR: '/var/log/app'  # Default log directory path
   APP_LOG_NAME: 'logs.log'  # Default log file name
   SSL_CONTEXT: True  # Default to using SSL context
+
+
+LOG_FILES:
+  CONSUMER: 'consumer.log'
+  FRONTEND: 'frontend.log'
+  LOGGER: 'logger.log'
 
 MONGO:
   URI: ''
@@ -14,6 +23,9 @@ CONSUMER:
     MAX_RETRY: 3 # Default maximum number of retries
     RETRY_DELAY: 5 # Default retry delay (in seconds)
     RETRY_BACKOFF_FACTOR: 2 # Default retry backoff factor
+
+REAL_TIME_LOGGER:
+  SOCKET_URL: 'http://localhost:8001/logger'
 
 NOTIFICATION:
   SUBJECT: 'Consumer Stopped - Logs'  # Default email subject

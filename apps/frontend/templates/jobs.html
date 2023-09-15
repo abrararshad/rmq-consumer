@@ -18,7 +18,7 @@
         {% for job in jobs %}
             <div class="table-row">
                 <div class="table-cell"><a href="{{ url_for('get_job', hash=job["hash"]) }}"> {{ job["hash"]  }}</a></div>
-                <div class="table-cell">{{ job["command"] }}</div>
+                <div class="table-cell">{{ job["command_args"] }}</div>
                 <div class="table-cell">{{ job["status"] }}</div>
                 <div class="table-cell">{{ job["error"] }}</div>
                 <div class="table-cell">{{ job["retry"] }}</div>

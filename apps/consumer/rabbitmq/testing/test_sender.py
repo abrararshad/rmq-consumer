@@ -1,9 +1,7 @@
-import os
 import unittest
 import pytest
 from testing.test_app import initialize_app
 from concurrent.futures import ThreadPoolExecutor
-from app import consumer_app
 
 
 # import pydevd_pycharm
@@ -20,7 +18,7 @@ class RabitMQSenderTests(unittest.TestCase):
 
     def send_message(self, msg):
         with self.app.app_context():
-            from consumer.rabbitmq.queue_sender import QueueSender
+            from apps.consumer.rabbitmq.queue_sender import QueueSender
             from utils.func import log
 
             queue_sender = QueueSender(logger=log)

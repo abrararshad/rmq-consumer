@@ -1,11 +1,10 @@
 import time
-from consumer.rabbitmq.queue_subscriber import QueueSubscriber
-from consumer.rabbitmq.rabbitmq_base import RabbitMQRejectionThresholdError, error_queue, ERRORS_THRESHOLD_LIMIT
+from apps.consumer.rabbitmq.queue_subscriber import QueueSubscriber
+from apps.consumer.rabbitmq.rabbitmq_base import RabbitMQRejectionThresholdError, error_queue, ERRORS_THRESHOLD_LIMIT
 from utils.func import log, log_error
 from .handler import handle_queue
-from rmq.config import RMQConfig
+from app_initializer.config import RMQConfig
 from notification import notification_manager
-import pydevd_pycharm
 
 MAX_RETRY = 3
 RETRY_DELAY = 5

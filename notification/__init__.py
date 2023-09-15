@@ -1,4 +1,4 @@
-from rmq.config import RMQConfig
+from app_initializer.config import RMQConfig
 from utils.func import log_error
 from notification.manager import NotificationManager
 from .services.discord import DiscordService

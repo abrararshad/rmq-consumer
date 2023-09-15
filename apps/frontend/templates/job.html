@@ -1,13 +1,15 @@
 {% extends "main.html" %}
 
 {% block title %}
-    {{ job['hash'] }}
+    HASH: {{ job['hash'] }}
 {% endblock %}
 
 {% block content %}
     <div class="col-xl-12">
-        <h3> Command </h3>
-        {{ job['command'] }}
+        <h3> Command Args </h3>
+        <pre>
+            {{ job['command_args'] | tojson(indent=4) }}
+        </pre>
     </div>
     <hr/>
     <div class="col-xl-12">
@@ -15,9 +17,9 @@
         {{ job['error'] }}
     </div>
 
-    <br /><br />
+
     <div class="col-xl-12">
-        <a href="{{ url_for('run_job', hash=job['hash']) }}" target="_blank" class="btn btn-primary">Run</a>
+        <a href="{{ url_for('run_job', hash=job['hash']) }}" target="_blank" class="btn btn-primary">Re-run</a>
     </div>
 
 {% endblock %}

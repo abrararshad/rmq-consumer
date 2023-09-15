@@ -1,12 +1,14 @@
+import json
 from flask import render_template, current_app, Response, redirect, request
 from shared.services import JobService
 from pymongo.errors import OperationFailure
+from utils.func import log_error
 import subprocess
-from utils.func import print_cursor_data
 import pydevd_pycharm
 
 
 # pydevd_pycharm.settrace('host.docker.internal', port=21001, stdoutToServer=True, stderrToServer=True)
+
 
 @current_app.route('/', methods=['GET'])
 def get_jobs():
@@ -74,7 +76,17 @@ def run_job(hash):
     if not job:
         return redirect(request.referrer or '/')
 
-    return Response(run_command(job.command, job.cwd), mimetype='text/html')
+    try:
+        command = json.dumps(job.command_args)
+    except Exception as ex:
+        log_error(f"An error occurred: {ex}")
+        raise Exception(f"An error occurred: {ex}")
+
+    if not command:
+        raise Exception(f"Command is empty for job {job.id}")
+
+    command = "{} '{}'".format(job.executor, command)
+    return Response(run_command(command, job.cwd), mimetype='text/html')
 
 
 def run_command(command, cwd):
