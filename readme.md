@@ -7,7 +7,7 @@ It can run multiple consumers with Python threading. The purpose of this project
 It has three key components / apps:
 
 ## Consumer 
-Connects to RabbitMQ and consumes specified queues. To run,
+Connects to RabbitMQ and consumes specified queues. It can also send emails and notifications to Discord in case of any errors or when consumer is stopped due to any reason.
 ```
 python app.py consumer local true
 ```
