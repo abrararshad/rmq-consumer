@@ -2,7 +2,7 @@ import os
 import json
 from utils.func import log, log_error, md5_hash
 from app_initializer.config import RMQConfig
-from apps.consumer.rabbitmq.rabbitmq_base import error_queue
+from modules.rabbitmq.rabbitmq_base import error_queue
 from .commandexecutor import CommandExecutor
 from notification import notification_manager
 from shared.services import JobService

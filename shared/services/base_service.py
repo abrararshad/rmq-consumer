@@ -23,6 +23,14 @@ class BaseService:
 
         return bulk.execute()
 
+    def get(self, id):
+        m = self._collection.find_one({"_id": ObjectId(id)})
+
+        if m:
+            return self._initialize(m)
+
+        return None
+
     def find(self, find={}, *opts):
         try:
             sort = None
@@ -67,6 +75,9 @@ class BaseService:
         except Exception as e:
             raise Exception("Error:{}".format(e))
 
+    def _initialize(self, data):
+        raise NotImplementedError
+
     def get_count(self, find={}):
         try:
             return self._collection.count_documents(find)
@@ -91,25 +102,3 @@ class BaseService:
             return self._collection.aggregate(pipelines)
         except Exception as e:
             return e
-
-    def initialize(self, data, model):
-        m = model(self._collection, self.config)
-
-        if data and '_id' not in data:
-            return None
-
-        return m.initialize(data)
-
-    def get(self, _id):
-        if not _id:
-            return None
-
-        result = self._collection.find_one({"_id": ObjectId(str(_id))})
-        if result:
-            return self._initialize(result)
-
-        return None
-
-    @classmethod
-    def mongo_id(cls, _id):
-        return ObjectId(_id)

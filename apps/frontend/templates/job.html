@@ -1,25 +1,78 @@
 {% extends "main.html" %}
 
-{% block title %}
-    HASH: {{ job['hash'] }}
-{% endblock %}
+{#{% block title %}#}
+{#    HASH: {{ job['hash'] }}#}
+{#{% endblock %}#}
 
+<style>
+    /* Custom CSS for sticky section */
+    .sticky-section {
+        position: sticky;
+        top: 0;
+        background-color: white;
+        z-index: 1;
+        padding: 20px;
+    }
+</style>
 {% block content %}
-    <div class="col-xl-12">
-        <h3> Command Args </h3>
-        <pre>
-            {{ job['command_args'] | tojson(indent=4) }}
-        </pre>
-    </div>
-    <hr/>
-    <div class="col-xl-12">
-        <h3> Error </h3>
-        {{ job['error'] }}
-    </div>
+    <br /><br />
+    <div class="container-fluid">
+        {% if msg %}
+            <div class="alert alert-{{ msg_type | default('primary') }}" role="alert">
+                {{ msg }}
+            </div>
+        {% endif %}
+        <div class="row">
+            <!-- Sticky Action and Info Section -->
+            <div class="col-xl-3 sticky-section">
+                <div class="row">
+                    <div class="col-xl-12">
+                        <a href="{{ url_for('run_job', hash=job['hash']) }}" target="_blank"
+                           class="btn btn-primary">Re-run</a>
+                        &nbsp;
+                        &nbsp;
+                        <a href="{{ url_for('requeue_by_hash', hash=job['hash']) }}"
+                           class="btn btn-primary">Re-queue</a>
+                                                &nbsp;
+                        &nbsp;
+                        <a href="{{ url_for('job_reset_error', job_id=job['id']) }}"
+                           class="btn btn-primary">Reset Errors</a>
+                    </div>
+                </div>
+                <br/>
+                <h3>Metadata</h3>
+                <!-- Add metadata information here, e.g., date -->
+                <p>Date: {{ job['created']|ctime }}</p>
+            </div>
 
-
-    <div class="col-xl-12">
-        <a href="{{ url_for('run_job', hash=job['hash']) }}" target="_blank" class="btn btn-primary">Re-run</a>
+            <!-- Job Details Section -->
+            <div class="col-xl-9">
+                <!-- Hash -->
+                <div class="row">
+                    <div class="col-xl-12">
+                        <h3>Hash</h3>
+                        {{ job['hash'] }}
+                    </div>
+                </div>
+                <!-- Command Args -->
+                <div class="row">
+                    <div class="col-xl-12">
+                        <h3>Command Args</h3>
+                        <pre>
+                            {{ job['command_args'] | tojson(indent=4) }}
+                        </pre>
+                    </div>
+                </div>
+                <hr/>
+                <!-- Error -->
+                <div class="row">
+                    <div class="col-xl-12">
+                        <h3>Error</h3>
+                        <span style="white-space: pre-line;">{{ job['error'] }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
 {% endblock %}
+

@@ -6,8 +6,13 @@ class JobService(BaseService):
     files_dir = None
     config = None
 
-    def initialization(self, data):
-        return self.initialize(data, Job)
+    def _initialize(self, data):
+        job = Job(self._collection)
+
+        if '_id' not in data:
+            return None
+
+        return job.initialize(data)
 
     def create(self, data):
         event = Job(self._collection, self.config)
@@ -17,7 +22,7 @@ class JobService(BaseService):
     def find_by_hash(self, hash):
         result = self._collection.find_one({"hash": hash})
         if result:
-            return self.initialization(result)
+            return self._initialize(result)
         else:
             pass
 

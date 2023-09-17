@@ -1,6 +1,6 @@
 import time
-from apps.consumer.rabbitmq.queue_subscriber import QueueSubscriber
-from apps.consumer.rabbitmq.rabbitmq_base import RabbitMQRejectionThresholdError, error_queue, ERRORS_THRESHOLD_LIMIT
+from modules.rabbitmq.queue_subscriber import QueueSubscriber
+from modules.rabbitmq.rabbitmq_base import RabbitMQRejectionThresholdError, error_queue, ERRORS_THRESHOLD_LIMIT
 from utils.func import log, log_error
 from .handler import handle_queue
 from app_initializer.config import RMQConfig
@@ -43,6 +43,7 @@ def connect():
         if isinstance(last_error, RabbitMQRejectionThresholdError):
             log(f'Not connecting again. {str(last_error)}')
             send_threshold_reached_email()
+            exit()
 
         retry_count += 1
         if retry_count < MAX_RETRY:
@@ -62,9 +63,9 @@ def send_threshold_reached_email():
         logs_lines.append(error_queue.get())
 
     body_prefix = f'<h3>Threshold limit: {ERRORS_THRESHOLD_LIMIT}</h3>'
-    notification_manager.send_notifications(body=logs_lines, body_prefix=body_prefix, service_name='log_email')
+    # notification_manager.send_notifications(body=logs_lines, body_prefix=body_prefix, service_name='log_email')
 
 
 def send_max_tried_failed_email():
     body_prefix = f'<h3>Max retry limit reached: {MAX_RETRY}</h3>'
-    notification_manager.send_notifications(body_prefix=body_prefix, service_name='log_email')
+    # notification_manager.send_notifications(body_prefix=body_prefix, service_name='log_email')

@@ -1,7 +1,6 @@
-from .base.field import StringField, IntegerField, MapField
 from shared.types import JobStatus
-from .base.model import BaseModel
-
+from mongoday.field import BaseField, MongoIDField, StringField, MapField, IntegerField, BooleanField
+from mongoday.model import BaseModel
 
 class Job(BaseModel):
     def __init__(self, collection, config=None):
@@ -12,6 +11,14 @@ class Job(BaseModel):
         self.status = IntegerField(None)
         self.error = StringField()
         self.retry = IntegerField(0)
+
+        indexes = [
+            [('hash', 1), {'unique': True}],
+            [('user_id', -1)],
+            [('command_args', 'text'), ('error', 'text')],
+        ]
+
+        self.add_indexes(indexes)
 
         super(Job, self).__init__(collection, config)
 
@@ -29,5 +36,5 @@ class Job(BaseModel):
 
     def fail(self, error):
         self.status = JobStatus.ERROR
-        self.error = error
+        self.error = f"{self.error}\n\n------------------>\n\n{error}" if self.error else error
         self.save()

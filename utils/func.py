@@ -49,5 +49,6 @@ def print_cursor_data(cursor):
         #     print(key)
 
 
-def md5_hash(string):
-    return hashlib.md5(string.encode()).hexdigest()
+def md5_hash(txt):
+    txt = txt.replace(" ", "")
+    return hashlib.md5(txt.encode()).hexdigest()

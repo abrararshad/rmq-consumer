@@ -20,3 +20,4 @@ discordwebhook==1.0.3
 Flask-PyMongo==2.3.0
 Flask-SocketIO==5.3.6
 Flask-BasicAuth==0.2.0
+mongoday==0.0.2

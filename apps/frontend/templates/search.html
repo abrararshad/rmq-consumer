@@ -1,0 +1,124 @@
+{% extends "main.html" %}
+
+{#{% block title %}#}
+{#    Jobs#}
+{#{% endblock %}#}
+
+{% set instruction_s %}
+{% block instruction %}
+    <div class="container" style="padding: 0px;">
+        <div class="card">
+            <div class="card-header" id="searchInstructions">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#searchContent"
+                            aria-expanded="true" aria-controls="searchContent">
+                        Instructions
+                    </button>
+                </h5>
+            </div>
+
+            <div id="searchContent" class="collapse hide" aria-labelledby="searchInstructions">
+                <div class="card-body">
+                    <h6>To search for hash that is equal ede43bb6deb3137a695d3205dba7f16a:</h6>
+                    <p>Enter the query: <code>hash:ede43bb6deb3137a695d3205dba7f16a</code></p>
+
+                    <h6>To search for documents where the user_id in command_args is equal to 2668:</h6>
+                    <p>Enter the query: <code>command_args.user_id:2668</code></p>
+
+                    <h6>To search for documents where the req_id is greater than 500:</h6>
+                    <p>Enter the query: <code>command.req_id:$gt:500</code></p>
+
+                    <h6>To search for documents where the req_id is less than or equal to 1000:</h6>
+                    <p>Enter the query: <code>command.req_id:$lte:1000</code></p>
+
+                    <h6>To search for documents where the cl_id is not in a list of values, such as 6503e6a91f32a and
+                        12345:</h6>
+                    <p>Enter the query: <code>command_args.cl_id:$nin:6503e6a91f32a,12345</code></p>
+
+                    <h6>To search for documents where the ips array in ro object in command_args contains the IP
+                        172.18.0.1:</h6>
+                    <p>Enter the query: <code>command_args.ro.ips:$in:172.18.0.1</code></p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% endset %}
+
+
+{% block content %}
+    <div class="container mt-5">
+        <h1>Search</h1>
+        {{ instruction_s }}
+        <br/>
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endif %}
+        <form method="GET" action="/">
+            <div class="form-group">
+                <label for="query">Search Query (Dot Notation)</label>
+                <input type="text" class="form-control" id="query" name="query" value="{{ query | default('') }}"
+                       placeholder="Enter dot-notation query">
+            </div>
+            <br/>
+            <button type="submit" class="btn btn-primary">Search</button>
+
+            &nbsp;
+            <a href="{{ url_for('requeue_by_query', exec_query=query) }}"
+               class="btn btn-primary {% if not searched %}disabled{% endif %}"
+                    {% if not searched %} tabindex="-1" aria-disabled="true"
+               style="pointer-events: none;" {% endif %}>
+                Re-queue All
+            </a>
+
+
+        </form>
+    </div>
+    <br/>
+    <!-- Pagination -->
+    <div class="pagination">
+        {% if count > 0 %}
+            <span>Total {{ count }} - &nbsp;</span>
+
+            <!-- Display the current page and total pages -->
+            <span>Page {{ current_page }} of {{ total_pages }}</span>
+
+            &nbsp;&nbsp;
+            <!-- Previous Page Link -->
+            {% if current_page > 1 %}
+                {% set prev_page = current_page - 1 %}
+                <a href="{{ url_for('search', page=prev_page, query=query) }}">Previous</a>
+            {% endif %}
+            &nbsp;&nbsp;
+{#            <!-- Next Page Link -->#}
+            {% if current_page < total_pages %}
+                {% set next_page = current_page + 1 %}
+                <a href="{{ url_for('search', page=next_page, query=query) }}">Next</a>
+            {% endif %}
+        {% endif %}
+    </div>
+    <br/>
+    <div class="table-container">
+        <div class="table-row header">
+            <div class="table-cell">Hash</div>
+            <div class="table-cell">Command</div>
+            <div class="table-cell">Status</div>
+            <div class="table-cell">Error</div>
+            <div class="table-cell">Retry</div>
+            <div class="table-cell">Created</div>
+        </div>
+        {% for job in jobs %}
+            <div class="table-row">
+                <div class="table-cell"><a href="{{ url_for('get_job', hash=job["hash"]) }}"> {{ job["hash"] }}</a>
+                </div>
+                <div class="table-cell">{{ job["command_args"] }}</div>
+                <div class="table-cell">{{ job["status"] }}</div>
+                <div class="table-cell">{{ job["error"] }}</div>
+                <div class="table-cell">{{ job["retry"] }}</div>
+                <div class="table-cell">{{ job["created"]|ctime }}</div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
