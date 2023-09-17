@@ -63,9 +63,9 @@ def send_threshold_reached_email():
         logs_lines.append(error_queue.get())
 
     body_prefix = f'<h3>Threshold limit: {ERRORS_THRESHOLD_LIMIT}</h3>'
-    # notification_manager.send_notifications(body=logs_lines, body_prefix=body_prefix, service_name='log_email')
+    notification_manager.send_notifications(body=logs_lines, body_prefix=body_prefix, service_name='log_email')
 
 
 def send_max_tried_failed_email():
     body_prefix = f'<h3>Max retry limit reached: {MAX_RETRY}</h3>'
-    # notification_manager.send_notifications(body_prefix=body_prefix, service_name='log_email')
+    notification_manager.send_notifications(body_prefix=body_prefix, service_name='log_email')
