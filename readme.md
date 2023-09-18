@@ -9,18 +9,18 @@ It has three key components / apps:
 ## Consumer 
 Connects to RabbitMQ and consumes specified queues. It can also send emails and notifications to Discord in case of any errors or when consumer is stopped due to any reason.
 ```
-python app.py consumer local true
+python app.py consumer local
 ```
 
 ## Frontend
 Provides a web-based management, failed jobs can be re-run. It requires MongoDB to store the data.
 ```
-python app.py dash local true
+python app.py dash local
 ```
 ## Logger
 Kind of real-time logging interface to see consumer's logs, avoiding SSHing into the server.
 ```
-python app.py logger local true
+python app.py logger local
 ```
 Once run its available at ```example.com/logger```. 
 

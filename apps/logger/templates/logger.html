@@ -33,7 +33,7 @@
         integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+"
         crossorigin="anonymous"></script>
 <script>
-    var socket = io.connect('http://' + document.domain + ':' + '8001');
+    var socket = io.connect('//' + document.domain + ':' + location.port, {path: '/logger/socket.io'});
 
     socket.on('log_update', function (data) {
         socket.emit('log_update', {data: 'I\'m connected!'});

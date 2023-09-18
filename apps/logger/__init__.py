@@ -16,7 +16,7 @@ def require_authentication():
         return basic_auth.challenge()
 
 
-def run_app(local=True):
+def run_app(run_local=False):
     with app.app_context():
         app.config['BASIC_AUTH_USERNAME'] = current_app.config['BASIC_AUTH_USERNAME']
         app.config['BASIC_AUTH_PASSWORD'] = current_app.config['BASIC_AUTH_PASSWORD']
@@ -28,4 +28,7 @@ def run_app(local=True):
 
         from .controller import api
 
-        socket_app.socketio.run(app, port=8001, host='0.0.0.0', debug=local)
+        if run_local:
+            socket_app.socketio.run(app, port=8001, host='0.0.0.0', debug=True)
+
+    return app

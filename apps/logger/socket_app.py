@@ -8,7 +8,7 @@ import subprocess
 import pydevd_pycharm
 
 app = AppInitializer(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", path="/logger/socket.io")
 thread = None
 thread_lock = Lock()
 

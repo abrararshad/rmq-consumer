@@ -64,11 +64,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("app", help="App(service) to start", choices=('consumer', 'dash', 'logger'))
     parser.add_argument("env", help="The environment in which app should run", choices=('local', 'dev', 'prod'))
-    parser.add_argument("local", help="Run the app locally", type=bool)
     args = parser.parse_args()
 
     app_name = args.app
     environment = args.env
-    run_locally = args.local
+
+    if environment != 'local':
+        run_locally = False
 
     init_app()
