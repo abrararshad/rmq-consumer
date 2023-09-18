@@ -20,7 +20,7 @@ discordwebhook==1.0.3
 Flask-PyMongo==2.3.0
 Flask-SocketIO==5.3.6
 Flask-BasicAuth==0.2.0
-mongoday==0.0.2
+mongoday==0.0.3
 gunicorn==21.2.0
 gevent==23.9.1
 gevent-websocket==0.10.1

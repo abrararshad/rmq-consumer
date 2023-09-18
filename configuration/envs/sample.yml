@@ -25,7 +25,7 @@ CONSUMER:
     RETRY_BACKOFF_FACTOR: 2 # Default retry backoff factor
 
 REAL_TIME_LOGGER:
-  SOCKET_URL: 'http://localhost:8001/logger'
+  SOCKET_URL: 'http://localhost:9001/logger'
 
 NOTIFICATION:
   SUBJECT: 'Consumer Stopped - Logs'  # Default email subject

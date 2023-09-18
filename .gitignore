@@ -6,3 +6,4 @@ configuration/envs
 !configuration/envs/sample.yml
 venv
 supervisord.pid
+modules/mongo_model
