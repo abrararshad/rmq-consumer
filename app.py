@@ -75,5 +75,4 @@ if __name__ == '__main__':
     if environment != 'local' and not run_locally:
         run_locally = False
 
-    # Your init_app() function here
     init_app()
