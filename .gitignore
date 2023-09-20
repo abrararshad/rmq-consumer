@@ -8,3 +8,5 @@ venv
 supervisord.pid
 modules/mongo_model
 *.sock
+*.log
+
