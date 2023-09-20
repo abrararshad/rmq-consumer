@@ -4,7 +4,7 @@ from shared.services import JobService
 from modules.rabbitmq.queue_sender import QueueSender
 from .func import search_jobs, run_command
 from utils.func import log_error
-
+import pydevd_pycharm
 
 # pydevd_pycharm.settrace('host.docker.internal', port=21001, stdoutToServer=True, stderrToServer=True)
 
@@ -22,7 +22,7 @@ def search(page, query):
     page = int(page)
 
     # remove white spaces from query
-    query = query.replace(" ", "")
+    # query = query.replace(" ", "")
 
     is_searched = False
     total_pages = 0

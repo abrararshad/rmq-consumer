@@ -2,6 +2,7 @@ from shared.types import JobStatus
 from mongoday.field import BaseField, MongoIDField, StringField, MapField, IntegerField, BooleanField
 from mongoday.model import BaseModel
 
+
 class Job(BaseModel):
     def __init__(self, collection, config=None):
         self.hash = StringField()
@@ -15,7 +16,7 @@ class Job(BaseModel):
         indexes = [
             [('hash', 1), {'unique': True}],
             [('user_id', -1)],
-            [('command_args', 'text'), ('error', 'text')],
+            [('error', 'text')],
         ]
 
         self.add_indexes(indexes)

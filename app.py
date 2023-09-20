@@ -63,20 +63,17 @@ def print_config(config):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("app", help="App(service) to start", choices=('consumer', 'dash', 'logger'))
-    parser.add_argument("env", help="The environment in which app should run", choices=('local', 'dev', 'prod'))
-
-    # create an argment for run_locally but it should not be required
-    parser.add_argument("run_locally", help="Run the app locally", choices=('true', 'false'), default='false')
+    parser.add_argument("env", help="The environment in which the app should run", choices=('local', 'dev', 'prod'))
+    parser.add_argument("--run-locally", help="Run the app locally", action='store_true', default=True)
 
     args = parser.parse_args()
 
     app_name = args.app
     environment = args.env
+    run_locally = args.run_locally
 
-    if environment != 'local':
+    if environment != 'local' and not run_locally:
         run_locally = False
 
-    if args.run_locally == 'true':
-        run_locally = True
-
+    # Your init_app() function here
     init_app()
