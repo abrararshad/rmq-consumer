@@ -2,7 +2,7 @@ from flask import current_app
 from flask_pymongo import PyMongo
 
 from shared.services.job_service import JobService
-from modules.mongo_model import IndexStore
+from mongoday.index_store import IndexStore
 
 mongo = PyMongo(current_app, uri=current_app.config['MONGO']['URI'])
 
