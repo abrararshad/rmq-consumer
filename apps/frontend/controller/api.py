@@ -6,6 +6,7 @@ from .func import search_jobs, run_command
 from utils.func import log_error
 import pydevd_pycharm
 
+
 # pydevd_pycharm.settrace('host.docker.internal', port=21001, stdoutToServer=True, stderrToServer=True)
 
 
@@ -36,7 +37,8 @@ def search(page, query):
 
         total_pages = -(-total_count // page_size)
     except Exception as ex:
-        return render_template('search.html', jobs={}, query=query, error=ex, current_page=page, total_pages=total_pages,
+        return render_template('search.html', jobs={}, query=query, error=ex, current_page=page,
+                               total_pages=total_pages,
                                count=total_count, searched=is_searched)
 
     if query and len(result) > 0:

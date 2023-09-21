@@ -48,7 +48,7 @@ def search_jobs(query=None, page=1, page_size=10):
     else:
         mongo_query = {}
 
-    total_cursor = JobService._collection.find(mongo_query).sort("created", 1)
+    total_cursor = JobService._collection.find(mongo_query).sort("created", -1)
 
     # Clone the cursor for paginated results and apply limit and skip
     results_cursor = total_cursor.clone()
