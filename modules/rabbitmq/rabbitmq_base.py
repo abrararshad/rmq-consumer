@@ -38,6 +38,9 @@ def error_monitor_thread_callback():
             else:
                 ERRORS_THRESHOLD_REACHED = False
 
+        # Need timer here, otherwise it will cause the CPU go too high
+        time.sleep(1)
+
 
 class RabbitMQBase(object):
     new_initialization = False
@@ -134,13 +137,14 @@ class RabbitMQBase(object):
 
     def send_heartbeat(self):
         while True:
-            if self.connection and self.channel:
-                try:
-                    self.channel.connection.process_data_events()  # Send heartbeat signal
+            try:
+                if self.connection and self.channel:
+                    self.channel.connection.process_data_events()
                     print('heartbeat sent')
-                except Exception as e:
-                    print(f"Error sending heartbeat: {e}")
-            time.sleep(self.config['HEARTBEAT'] // 2)  # Send heartbeat every half of the heartbeat interval
+                    time.sleep(self.config['HEARTBEAT'])
+            except Exception as e:
+                print(f"Error sending heartbeat: {e}")
+                break
 
     def initialize(self):
         self.log('Setting up RabbitMQ with key: {}'.format(self.cache_key))
@@ -290,11 +294,16 @@ class RabbitMQBase(object):
     def shutdown(self, with_pool=True):
         try:
             self.channel.stop_consuming()
+
             if not with_pool:
                 self.close_threads()
 
             if with_pool:
+                self.pool.close()
+                self.pool.join()
+
                 self.close_pool()
+
         except Exception as e:
             self.log(e)
 
@@ -350,7 +359,8 @@ class RabbitMQBase(object):
         global ERRORS_THRESHOLD_LIMIT
 
         if ERRORS_THRESHOLD_REACHED:
-            raise RabbitMQRejectionThresholdError(f'Rejection threshold limit of {ERRORS_THRESHOLD_LIMIT} tries reached')
+            raise RabbitMQRejectionThresholdError(
+                f'Rejection threshold limit of {ERRORS_THRESHOLD_LIMIT} tries reached')
 
         (connection, threads, callback, with_pool, extra_args) = args
         delivery_tag = method.delivery_tag
