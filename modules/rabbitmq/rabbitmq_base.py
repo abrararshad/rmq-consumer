@@ -140,10 +140,10 @@ class RabbitMQBase(object):
             try:
                 if self.connection and self.channel:
                     self.channel.connection.process_data_events()
-                    print('heartbeat sent')
+                    self.log('heartbeat sent')
                     time.sleep(self.config['HEARTBEAT'])
             except Exception as e:
-                print(f"Error sending heartbeat: {e}")
+                self.log(f"Error sending heartbeat: {e}")
                 break
 
     def initialize(self):
@@ -289,6 +289,7 @@ class RabbitMQBase(object):
             self.log('Error occurred: {}'.format(str(error)))
             raise error
         finally:
+            self.log('Shutting down consumer')
             self.shutdown(with_pool)
 
     def shutdown(self, with_pool=True):
