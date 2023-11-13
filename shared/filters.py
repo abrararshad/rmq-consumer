@@ -1,18 +1,44 @@
 from flask import current_app
 from datetime import datetime
+import json
 import time
+from datetime import datetime
+
 
 @current_app.template_filter('ctime')
 def timectime(s):
-    return time.ctime(s)  # datetime.datetime.fromtimestamp(s)
+    return time.ctime(s)
+
+
+@current_app.template_filter('time_ago')
+def time_ago(s):
+    """
+    Convert a timestamp into a 'time ago' format.
+    """
+    now = datetime.now()
+    timestamp = datetime.fromtimestamp(s)
+    diff = now - timestamp
+    seconds = diff.total_seconds()
+
+    if seconds < 60:
+        return f"{int(seconds)} seconds ago"
+    elif seconds < 3600:
+        return f"{int(seconds // 60)} minutes ago"
+    elif seconds < 86400:
+        return f"{int(seconds // 3600)} hours ago"
+    else:
+        return f"{int(seconds // 86400)} days ago"
+
 
 @current_app.template_filter('print_vars')
 def print_vars(obj):
     return dir(obj)
 
+
 @current_app.template_filter('pretty_json')
 def pretty_json(data):
     return json.dumps(data, indent=4)
+
 
 @current_app.template_filter('pretty_date')
 def pretty_date(time=False):
@@ -24,7 +50,7 @@ def pretty_date(time=False):
     now = datetime.now()
     if type(time) is int:
         diff = now - datetime.fromtimestamp(time)
-    elif isinstance(time,datetime):
+    elif isinstance(time, datetime):
         diff = now - time
     elif not time:
         diff = now - now

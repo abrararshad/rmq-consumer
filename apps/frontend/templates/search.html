@@ -20,24 +20,27 @@
             <div id="searchContent" class="collapse hide" aria-labelledby="searchInstructions">
                 <div class="card-body">
                     <h6>To search for hash that is equal ede43bb6deb3137a695d3205dba7f16a:</h6>
-                    <p>Enter the query: <code>hash:ede43bb6deb3137a695d3205dba7f16a</code></p>
+                    <p>Syntax: <code>hash:ede43bb6deb3137a695d3205dba7f16a</code></p>
 
                     <h6>To search for documents where the user_id in command_args is equal to 2668:</h6>
-                    <p>Enter the query: <code>command_args.user_id:2668</code></p>
+                    <p>Syntax: <code>command_args.user_id:2668</code></p>
 
                     <h6>To search for documents where the req_id is greater than 500:</h6>
-                    <p>Enter the query: <code>command.req_id:$gt:500</code></p>
+                    <p>Syntax: <code>command.req_id:$gt:500</code></p>
 
                     <h6>To search for documents where the req_id is less than or equal to 1000:</h6>
-                    <p>Enter the query: <code>command.req_id:$lte:1000</code></p>
+                    <p>Syntax: <code>command.req_id:$lte:1000</code></p>
 
                     <h6>To search for documents where the cl_id is not in a list of values, such as 6503e6a91f32a and
                         12345:</h6>
-                    <p>Enter the query: <code>command_args.cl_id:$nin:6503e6a91f32a,12345</code></p>
+                    <p>Syntax: <code>command_args.cl_id:$nin:6503e6a91f32a,12345</code></p>
 
                     <h6>To search for documents where the ips array in ro object in command_args contains the IP
                         172.18.0.1:</h6>
-                    <p>Enter the query: <code>command_args.ro.ips:$in:172.18.0.1</code></p>
+                    <p>Syntax: <code>command_args.ro.ips:$in:172.18.0.1</code></p>
+
+                    <h6> To search with multiple conditions using "AND" and "OR" </h6>
+                    <p>Syntax: <code>command_args.entities.id:65494181cfcf7b13200d4277 AND command_args.user_id:2671 OR command_args.entities.type:wefiq_stripe_payment</code></p>
                 </div>
             </div>
         </div>
@@ -117,7 +120,7 @@
                 <div class="table-cell">{{ job["status"] }}</div>
                 <div class="table-cell">{{ job["error"] }}</div>
                 <div class="table-cell">{{ job["retry"] }}</div>
-                <div class="table-cell">{{ job["created"]|ctime }}</div>
+                <div class="table-cell">{{ job["created"]|time_ago }}</div>
             </div>
         {% endfor %}
     </div>
